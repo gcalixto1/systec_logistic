@@ -1,0 +1,7 @@
+{
+    "require": {
+        "luecano/numero-a-letras": "^3.0",
+        "endroid/qr-code": "^4.8",
+        "phpmailer/phpmailer": "^6.10"
+    }
+}

@@ -1,0 +1,1 @@
+var dateElement = document.getElementById("fecha");function updateDateTime() {var currentDate = new Date();var dateString = currentDate.toLocaleDateString();var timeString = currentDate.toLocaleTimeString();dateElement.textContent = "Fecha: " + dateString + " - Hora: " + timeString;}updateDateTime();setInterval(updateDateTime, 1000);

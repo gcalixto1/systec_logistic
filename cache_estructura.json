@@ -1,0 +1,121 @@
+{
+    "nit": "06142610921281",
+    "activo": "true",
+    "passwordPri": "Syst3c_Priv@d0",
+    "dteJson": {
+        "identificacion": {
+            "version": 3,
+            "ambiente": "00",
+            "tipoDte": "03",
+            "numeroControl": "DTE-03-M001P001-000000000000170",
+            "codigoGeneracion": "12E95037-7B8C-BBAF-D579-B9E12BFBD71D",
+            "tipoOperacion": 1,
+            "tipoModelo": 1,
+            "tipoContingencia": null,
+            "motivoContin": null,
+            "fecEmi": "2025-08-16",
+            "horEmi": "13:55:25",
+            "tipoMoneda": "USD"
+        },
+        "documentoRelacionado": null,
+        "emisor": {
+            "nit": "06142610921281",
+            "nrc": "3335743",
+            "nombre": "Gerson Alexander Escobar Calixto",
+            "codActividad": "62090",
+            "descActividad": "Otras actividades de tecnología de información y servicios de computadora",
+            "nombreComercial": "SYSTEC",
+            "tipoEstablecimiento": "02",
+            "direccion": {
+                "departamento": "03",
+                "municipio": "20",
+                "complemento": "Residencial Los Castaños, Poligono 9 Casa 16, Sonsonate"
+            },
+            "telefono": "73999642",
+            "correo": "systec.atencion@gmail.com",
+            "codEstableMH": "M001",
+            "codEstable": null,
+            "codPuntoVentaMH": "P001",
+            "codPuntoVenta": null
+        },
+        "receptor": {
+            "nit": "06131301221010",
+            "nrc": "3112432",
+            "nombre": "CRUZ AUTOPARTS S.A. DE C.V.",
+            "nombreComercial": "CRUZ AUTOPARTS S.A. DE C.V.",
+            "codActividad": "45302",
+            "descActividad": "Venta de partes, piezas y accesorios usados para vehículos automotores",
+            "direccion": {
+                "departamento": "07",
+                "municipio": "17",
+                "complemento": "Carretera Panamericana KM 21 1\/2, San Pedro Perulapan, Cuscatlan"
+            },
+            "telefono": "73287177",
+            "correo": "autopartsa@gmail.com"
+        },
+        "otrosDocumentos": null,
+        "ventaTercero": null,
+        "cuerpoDocumento": [
+            {
+                "numItem": 1,
+                "tipoItem": 1,
+                "numeroDocumento": null,
+                "codigo": null,
+                "codTributo": null,
+                "descripcion": "SISTEMA DE PUNTO DE VENTA CON MODULO DE FACTURACION ELECTRONICA CCF,CONSUMIDOR FINAL,ANEXOS DE LIBROS DE VENTAS Y ANUNLACIONES",
+                "cantidad": 1,
+                "uniMedida": 59,
+                "precioUni": 575,
+                "montoDescu": 0,
+                "ventaNoSuj": 0,
+                "ventaExenta": 0,
+                "ventaGravada": 575,
+                "tributos": [
+                    "20"
+                ],
+                "psv": 0,
+                "noGravado": 0
+            }
+        ],
+        "resumen": {
+            "totalNoSuj": 0,
+            "totalExenta": 0,
+            "totalGravada": 575,
+            "subTotalVentas": 575,
+            "descuNoSuj": 0,
+            "descuExenta": 0,
+            "descuGravada": 0,
+            "porcentajeDescuento": 0,
+            "totalDescu": 0,
+            "tributos": [
+                {
+                    "codigo": "20",
+                    "descripcion": "Impuesto al Valor Agregado 13%",
+                    "valor": 74.75
+                }
+            ],
+            "subTotal": 575,
+            "ivaPerci1": 0,
+            "ivaRete1": 0,
+            "reteRenta": 0,
+            "montoTotalOperacion": 649.75,
+            "totalNoGravado": 0,
+            "totalPagar": 649.75,
+            "totalLetras": "SEISCIENTOS CUARENTA Y NUEVE DOLARES CON SETENTA Y CINCO CENTAVOS",
+            "saldoFavor": 0,
+            "condicionOperacion": 1,
+            "pagos": [
+                {
+                    "codigo": "05",
+                    "montoPago": 649.75,
+                    "referencia": "Transferencia-Deposito Bancario",
+                    "plazo": null,
+                    "periodo": null
+                }
+            ],
+            "numPagoElectronico": null
+        },
+        "extension": null,
+        "apendice": null
+    }
+}
