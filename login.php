@@ -66,23 +66,6 @@
             </form>
             <br>
         </div>
-        <br>
-        <?php
-        // Verificar si el parámetro tiene_tablas está definido
-        if (isset($_GET['pv'])) {
-            if ($_GET['pv'] == 0) {
-                ?>
-                <button type='button' class='btn btn-warning' style="color:#000;" onclick="crearConfiguraciones()">CREAR
-                    CONFIGURACIONES PARA EL CLIENTE <img width="30" height="30"
-                        src="https://img.icons8.com/ios-filled/30/database.png" alt="database" /></button>
-                <?php
-            } else {
-
-            }
-        } else {
-            echo "No se pudo determinar el estado de las tablas.";
-        }
-        ?>
     </div>
 
     <a href="#" class="back-to-top"><i class="icofont-simple-up"></i></a>

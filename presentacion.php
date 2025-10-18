@@ -31,7 +31,7 @@
                 <col width="90%">
                 <col width="45%">
             </colgroup>
-            <thead>
+            <thead class="table-dark">
                 <tr>
                     <th class="text-center">#</th>
                     <th class="text-center">Descripcion</th>

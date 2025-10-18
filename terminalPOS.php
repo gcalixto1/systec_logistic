@@ -1,443 +1,415 @@
-<?php
-include('conexionfin.php');
-?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crear Pedido</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f5f5f5;
-}
-
-.container {
-    display: flex;
-    height: 100vh;
-}
-
-.products {
-    width: 60%;
-    padding: 20px;
-    background: #ffffff;
-    overflow-y: auto;
-}
-
-.search-bar {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
-}
-
-.product-card {
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 10px;
-    background: #f9f9f9;
-}
-
-.product-card img {
-    width: 100%;
-    border-radius: 10px;
-}
-
-.product-card p {
-    margin: 10px 0;
-    font-size: 14px;
-}
-
-.product-card button {
-    padding: 5px 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.product-card button:hover {
-    background-color: #0056b3;
-}
-
-.cart2 {
-    width: 60%;
-    padding: -25px;
-    background: #f0f0f0;
-    overflow-y: auto;
-}
-
-.cart table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-
-.cart table th,
-.cart table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.cart-summary {
-    text-align: right;
-}
-
-.cart-summary p {
-    margin: 5px 0;
-}
-
-.btn {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.btn.cancel {
-    background-color: #dc3545;
-    color: white;
-}
-
-.btn.process {
-    background-color: #28a745;
-    color: white;
-}
-
-.btn:hover {
-    opacity: 0.9;
-}
-
-.product-card {
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 10px;
-    background: #f9f9f9;
-    cursor: pointer;
-    /* Cambia el cursor para indicar que es clickeable */
-    transition: background-color 0.3s ease;
-}
-
-.product-card:hover {
-    background-color: #e0e0e0;
-    /* Cambia ligeramente el fondo al pasar el mouse */
-}
-
-.tooltip-suggestions {
-    position: absolute;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    z-index: 1000;
-    width: 100%;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-    /* Oculto por defecto */
-}
-
-.tooltip-suggestions div {
-    padding: 8px;
-    cursor: pointer;
-}
-
-.tooltip-suggestions div:hover {
-    background-color: #f4f4f4;
-}
+.table td, .table th { vertical-align: middle; }
 </style>
-<div class="container col-lg-12">
-    <!-- Panel Izquierdo: Productos -->
-    <div class="products">
-        <!-- Barra de búsqueda -->
-        <div class="form-group has-feedback">
-            <div class="input-group">
-                <input type="text" class="search-bar" name="busquedaproductov" id="busquedaproductov" autocomplete="off"
-                    placeholder="Realice la Búsqueda por Código de barra o Nombre del producto"
-                    onkeyup="filterProducts()">
-            </div>
-        </div>
-        <div class="product-grid" id="productContainer">
-            <?php
-            // Consulta para obtener los productos desde la base de datos
-            $productos = $conexion->query("SELECT * FROM producto");
+</head>
+<body class="bg-light">
 
-            while ($producto = $productos->fetch_assoc()): ?>
-            <div class="product-card"
-                onclick="addToCart(<?= $producto['codproducto'] ?>, '<?= addslashes($producto['descripcion']) ?>', <?= $producto['precio'] ?>)"
-                data-name="<?= strtolower($producto['descripcion']) ?>"
-                data-code="<?= strtolower($producto['codBarra']) ?>">
-                <img src="<?= $producto['imagen_producto'] ?>" alt="<?= $producto['descripcion'] ?>">
-                <p><?= $producto['descripcion'] ?></p>
-                <p>$ <?= $producto['precio'] ?></p>
-            </div>
-            <?php endwhile; ?>
-        </div>
-    </div>
+<div class="container-fluid">
+    <h2 class="mb-4 text-center">📝 Crear Pedido</h2>
 
-    <!-- Panel Derecho: Carrito -->
-    <form class="cart2" method="post" action="#" name="saveventa" id="saveventa">
-        <div class="cart">
-            <div class="col-md-12">
-                <div class="form-group has-feedback">
-                    <label class="control-label">Búsqueda de Clientes: </label>
-                    <div class="input-group">
-                        <input type="hidden" name="codcliente" id="codcliente" value="0">
-                        <input type="hidden" id="csrf_token" name="csrf_token"
-                            value="<?php echo md5($_SESSION['login_idusuario']); ?>">
-                        <input type="text" class="form-control" name="busqueda" id="busqueda"
-                            placeholder="Ingrese Criterio para la Búsqueda del Cliente" autocomplete="off" />
-                        <span class="input-group-text" style="cursor: pointer;background:#28a745;" id="new_cliente"
-                            onclick="AgregarCliente()"><i class="fa fa-user-plus" style="color:white;"></i>
-                        </span>
-                        <div id="suggestions" class="tooltip-suggestions"></div>
+    <form id="formPedido">
+
+        <!-- INFO PEDIDO -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-12">
+                        <label>Cliente</label>
+                        <select class="form-control" id="cliente" name="cliente_id"></select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label>Sede</label>
+                        <input type="text" class="form-control" id="nombre_sede" name="nombre_sede">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label>Canal de Ventas</label>
+                        <select class="form-control" id="canal" name="canal_venta">
+                            <option value="">Seleccione...</option>
+                            <option value="correo electronico">Correo Electronico</option>
+                            <option value="llamada telefonica">Llamada Telefonica</option>
+                            <option value="punto fisico">Punto Fisico</option>
+                            <option value="whatsApp">WhatsApp</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label>Plazo de Pago (días)</label>
+                        <input type="number" class="form-control" id="plazo" name="plazo_pago_dias" placeholder="30">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label>Tipo de Transporte</label>
+                        <select class="form-control" id="transporte" name="tipo_transporte">
+                            <option value="">Seleccione...</option>
+                            <option value="cliente recoge">Cliente recoge</option>
+                            <option value="transporte propio">Transporte Propio</option>
+                            <option value="transporte tercero">Transporte Tercero</option>
+                        </select>
                     </div>
                 </div>
             </div>
-            <div class="col-md-12">
-                <div class="form-group has-feedback">
-                    <label class="control-label">Seleccione Comprobante: </label>
-                    <select name="prefix" id="prefix" class="form-control" aria-required="true">
-                        <option value=""> -- SELECCIONE -- </option>
-                        <?php
-                        require_once("includes/class.php");
-                        $consecutivo = new Action();
-                        $consecutivo = $consecutivo->Listarconsecutivos();
-                        for ($i = 0; $i < sizeof($consecutivo); $i++) { ?>
-                        <option value="<?php echo $consecutivo[$i]['codigo_consecutivo']; ?>">
-                            <?php echo $consecutivo[$i]['descripcionconse'] ?>
-                        </option>
-                        <?php } ?>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-12">
-                <div class="form-group has-feedback">
-                    <label class="control-label">Forma de Pago: </label>
-                    <select name="forma_pago" id="forma_pago" class="form-control" aria-required="true">
-                        <option value=""> -- SELECCIONE -- </option>
-                        <?php
-                        require_once("includes/class.php");
-                        $pago = new Action();
-                        $pago = $pago->ListarMediosPagos();
-                        for ($i = 0; $i < sizeof($pago); $i++) { ?>
-                        <option value="<?php echo $pago[$i]['codigo']; ?>">
-                            <?php echo $pago[$i]['medio_pago'] ?>
-                        </option>
-                        <?php } ?>
-                    </select>
-                </div>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Descripción</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Total</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="cart-items">
-                    <!-- Aquí se agregan los productos dinámicamente -->
-                </tbody>
-            </table>
-            <div class="cart-summary">
-                <p>SubTotal: <span id="subtotal">$ 0.00</span></p>
-                <p>I.V.A.: <span id="igv">$ 0.00</span></p>
-                <p style="font-weight: 700; font-size:25px;">Total: <span id="total">$ 0.00</span></p>
-                <div class="text-right">
-                    <?php
-                    include('conexionfin.php');
-                    $qry = $conexion->query("SELECT * FROM apertura_caja");
-                    if ($qry->num_rows > 0) { // Verifica si hay registros
-                        $hayCajaAbierta = false;
-                        while ($row = $qry->fetch_assoc()) {
-                            if ($row['estado'] == "A") {
-                                $hayCajaAbierta = true;
-                                break; // Sale del bucle si encuentra una caja abierta
-                            }
-                        }
-                        if ($hayCajaAbierta) {
-                            // Caja abierta encontrada
-                            if ($_SESSION['login_rol'] === 1) {
-                                echo '<button type="submit" id="idpagar" class="btn btn-warning"><span class="fa fa-calculator"></span> Pagar</button>';
-                            } elseif ($_SESSION['login_rol'] === 2) {
-                                // Rol diferente a 1, botón deshabilitado
-                                echo '<button type="submit" id="idpagar" class="btn btn-success"><span class="fa fa-calculator"></span> Enviar a caja</button>';
-                            } elseif ($_SESSION['login_rol'] === 3) {
-                                // Rol diferente a 1, botón deshabilitado
-                                echo '<button type="submit" id="idpagarF" class="btn btn-warning"><span class="fa fa-calculator"></span> Pagar factura</button>';
-                            }
-                        } else {
-                            // No hay caja abierta
-                            echo '<button type="submit" id="idpagar" disabled class="btn btn-dark"><span class="fa fa-calculator"></span> Pagar</button>';
-                        }
-                    } else {
-                        // No hay registros en la tabla
-                        echo '<button type="submit" id="idpagar" disabled class="btn btn-dark"><span class="fa fa-calculator"></span> Pagar</button>';
-                    }
-                    ?>
-                    <?php
-                    if ($_SESSION['login_rol'] === 3) {
-                        ?>
-                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalFacturas"><span
-                            class="fa fa-calculator"></span>
-                        Ventas por facturar</button>
-                    <?php
-                    } else {
-                        ?>
-
-                    <?php
-                    }
-                    ?>
-
-                    <button type="button" class="btn btn-dark" id="vaciar" onclick="Refresh()"><span
-                            class="fa fa-trash"></span>
-                        Cancelar</button>
+        </div>
+        <!-- AGREGAR PRODUCTO -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Agregar Producto</h5>
+                <div class="row g-3 align-items-end" id="form-producto">
+                    <div class="col-12 col-md-12">
+                        <label>Producto</label>
+                        <select class="form-control" id="producto" name="producto_id"></select>
+                        <input type="hidden" id="descproducto" name="descproducto">
+                        <input type="hidden" id="idPR" name="idPR">
+                    </div>
+                    <div class="col-6 col-md-2"><label>Tipo</label><input type="text" class="form-control" id="tipo" placeholder="0"></div>
+                    <div class="col-6 col-md-2"><label>Calibre</label><input type="text" class="form-control" id="calibre" placeholder="0"></div>
+                    <div class="col-6 col-md-2"><label>Referencia 1</label><input type="number" class="form-control" id="ref_1" placeholder="0"></div>
+                    <div class="col-6 col-md-2"><label>Referencia 2</label><input type="number" class="form-control" id="ref_2" placeholder="0"></div>
+                    <div class="col-6 col-md-2"><label>Relación</label><input type="text" class="form-control" id="relacion" placeholder="0"></div>
+                    <div class="col-6 col-md-2"><label>Cantidad (Unidades)</label><input type="text" class="form-control" id="cantidad" placeholder="0"></div>
+                    <div class="col-6 col-md-2"><label>Caja / Paca</label><input type="number" class="form-control" id="caja" placeholder="0"></div>
+                    <div class="col-6 col-md-2">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="checkIVAProducto" checked>
+                            <label class="form-check-label">Marcado Facturado / Sin Marcar Remisionado</label>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label>Lista de Precios</label>
+                        <select class="form-control" id="listaPrecio">
+                            <option value="5">Lista 5</option>
+                            <option value="4">Lista 4</option>
+                            <option value="3">Lista 3</option>
+                            <option value="2">Lista 2</option>
+                            <option value="1">Lista 1</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-2"><label>Precio Unit.</label><input type="number" class="form-control" id="precio" placeholder="0.00" step="0.01"></div>
+                    <div class="col-6 col-md-2"><label>Subtotal</label><input type="text" class="form-control" id="subtotal" readonly></div>
+                    <div class="col-6 col-md-2"><button type="button" class="btn btn-primary w-100" id="btnAgregar">➕</button></div>
                 </div>
             </div>
         </div>
-        <input type="hidden" name="idfacturaventa" id="idfacturaventa" value="0">
+   <!-- ENVÍO PARA MUESTRA -->
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="envioMuestra">
+            <label class="form-check-label" for="envioMuestra">
+                Envío para Muestra
+            </label>
+        </div>
+        <!-- DETALLE -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Detalle del Pedido</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center" id="tablaDetalle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unit.</th>
+                                <th>Subtotal</th>
+                                <th>IVA</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOTALES -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row justify-content-end">
+                    <div class="col-12 col-md-4">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="text-end"><strong>Subtotal:</strong></td>
+                                    <td class="text-end" id="totalSubtotal">0.00</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-end"><strong>IVA:</strong></td>
+                                    <td class="text-end" id="totalIVA">0.00</td>
+                                </tr>
+                                <tr class="border-top">
+                                    <td class="text-end"><strong>Total:</strong></td>
+                                    <td class="text-end h5" id="totalFinal">0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-success w-100 mt-3">💾 Guardar Pedido</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </form>
-
 </div>
-<div class="modal fade" id="modalFacturas" tabindex="-1" role="dialog" aria-labelledby="modalFacturasLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalFacturasLabel">Documentos Relacionados</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="contenidoModalFacturas">
-                <div class="text-center">
-                    <i class="fa fa-spinner fa-spin fa-2x"></i> Cargando datos...
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php
-if ($_SESSION['login_rol'] === 1) {
-    echo '<script src="js/scriptscar.js"></script>';
-} elseif ($_SESSION['login_rol'] === 2) {
-    echo '<script src="js/scriptscarV.js"></script>';
-} elseif ($_SESSION['login_rol'] === 3) {
-    echo '<script src="js/scriptscarF.js"></script>';
-}
-?>
-<script src="assets/script/autocompleto.js"></script>
 <script>
-function AgregarCliente() {
-    uni_modal("Gestion Clientes", "manage_clientes_venta.php")
-}
+// VARIABLES
+let detalle = [];
+let precios = { facturado:{}, remi:{} };
+let unidadesPorCaja = 1;
+let ivaGlobal = null; 
 
-function filterProducts() {
-    const searchInput = document.getElementById('busquedaproductov').value.toLowerCase();
-    const products = document.querySelectorAll('.product-card');
-
-    products.forEach(product => {
-        const name = product.getAttribute('data-name');
-        const code = product.getAttribute('data-code');
-
-        if (name.includes(searchInput) || code.includes(searchInput)) {
-            product.style.display = ''; // Mostrar producto
-        } else {
-            product.style.display = 'none'; // Ocultar producto
-        }
-    });
-}
-
-//Seleccion de faturas no procesadas
-$(document).on('click', '.seleccionar-factura', function() {
-    const idfactura = $(this).data('idfactura');
-    const cliente = $(this).data('cliente');
-    const codcliente = $(this).data('codcliente');
-    const prefix = $(this).data('prefix');
-    const pago = $(this).data('pago');
-    const detalle = $(this).data('detalle');
-
-    $('#idfacturaventa').val(idfactura);
-    $('#busqueda').val(cliente);
-    $('#codcliente').val(codcliente);
-    $('#prefix').val(prefix).trigger('change');
-    $('#forma_pago').val(pago).trigger('change');
-
-    $('#cart-items').empty();
-    let subtotal = 0;
-
-    detalle.forEach((item, index) => {
-        const total = item.precio * item.cantidad;
-        subtotal += total;
-
-        const row = `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${item.descripcion}</td>
-                <td>${item.cantidad}</td>
-                <td>$ ${item.precio.toFixed(2)}</td>
-                <td>$ ${total.toFixed(2)}</td>
-                <td>
-                    <button class="btn btn-danger btn-sm" onclick="$(this).closest('tr').remove(); recalcularTotal();">
-                        <i class="fa fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-        $('#cart-items').append(row);
-    });
-
-    const aplicaIVA = prefix.toLowerCase() === 'ccf';
-
-    // Si aplica IVA (es CCF), se desglosa del precio. Si es FCF, el precio ya lo incluye y no se desglosa.
-    const sbTotal = aplicaIVA ? subtotal / 1.13 : subtotal;
-    const iva = aplicaIVA ? sbTotal * 0.13 : 0;
-    const totalFinal = sbTotal + iva;
-
-    // Mostrar en pantalla
-    $('#subtotal').text(`$ ${sbTotal.toFixed(2)}`);
-    $('#igv').text(`$ ${iva.toFixed(2)}`);
-    $('#total').text(`$ ${totalFinal.toFixed(2)}`);
-
-    if (!aplicaIVA) {
-        $('#igv').closest('p').hide();
-    } else {
-        $('#igv').closest('p').show();
-    }
-    // $('#modalFacturas').modal('hide');
+// ================== SELECT2 CLIENTES ==================
+$('#cliente').select2({
+    placeholder: "Buscar cliente por código, NIT o nombre...",
+    allowClear: true,
+    ajax: {
+        url: 'buscar_cliente_por_dni.php',
+        dataType: 'json',
+        delay: 250,
+        data: params => ({ q: params.term }),
+        processResults: data => data
+    },
+    minimumInputLength: 1
 });
-$('#modalFacturas').on('show.bs.modal', function(event) {
-    const button = $(event.relatedTarget);
-    const dni = $('#busqueda').val().trim();
+$('#cliente').on('select2:select', e => {
+    let data = e.params.data;
+    $('#nombre_sede').val(data.nombre_sede || "");
+    $('#plazo').val(data.plazo_pago || "");
+});
+$('#cliente').on('select2:clear', () => { $('#nombre_sede').val(""); $('#plazo').val(""); });
 
-    $('#contenidoModalFacturas').html(
-        '<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i> Cargando...</div>');
+// ================== SELECT2 PRODUCTOS ==================
+$('#producto').select2({
+    placeholder: "Buscar producto por código o descripción...",
+    allowClear: true,
+    ajax: {
+        url: 'buscar_productoC.php',
+        dataType: 'json',
+        delay: 250,
+        data: params => ({ q: params.term }),
+        processResults: data => data
+    },
+    minimumInputLength: 1
+});
+$('#producto').on('select2:select', function(e){
+    let data = e.params.data;
+    unidadesPorCaja = parseFloat(data.unidades) || 1;
+    $('#caja').val(1);
+    $('#cantidad').val(unidadesPorCaja);
+    $('#calibre').val(data.calibre||0);
+    $('#ref_1').val(data.ref1||0);
+    $('#ref_2').val(data.ref2||0);
+    $('#tipo').val(data.tipo||0);
+    $('#descproducto').val(data.text);
+    $('#idPR').val(data.id);
+    $('#relacion').val(data.relacion||0);
+    let base = parseFloat(data.precio)||0;
+    let baseRemi = parseFloat(data.precioRemi)||base;
+    precios.facturado[5]=base; precios.remi[5]=baseRemi;
+    for(let i=4;i>=1;i--){
+        precios.facturado[i]=precios.facturado[i+1]-precios.facturado[i+1]*0.03;
+        precios.remi[i]=precios.remi[i+1]-precios.remi[i+1]*0.03;
+    }
+    $('#listaPrecio').val(5);
+    actualizarPrecio();
+});
+
+// ================== FUNCIONES DE PRECIOS ==================
+function actualizarPrecio(){
+    if($('#envioMuestra').is(':checked')){
+        $('#precio,#subtotal').val('0.00');
+        return;
+    }
+    let lista = parseInt($('#listaPrecio').val());
+    let precioFinal = $('#checkIVAProducto').is(':checked') ? precios.remi[lista] : precios.facturado[lista];
+    $('#precio').val(precioFinal.toFixed(2));
+    calcularSubtotal();
+}
+function calcularSubtotal(){
+    if($('#envioMuestra').is(':checked')){
+        $('#subtotal').val('0.00');
+        $('#cantidad').val($('#cantidad').val()); // mantener cantidad real
+        return;
+    }
+    let cajas = parseFloat($('#caja').val())||0;
+    let cantidadTotal = cajas * unidadesPorCaja;
+    $('#cantidad').val(cantidadTotal);
+    let precio = parseFloat($('#precio').val())||0;
+    $('#subtotal').val((cajas*precio).toFixed(2));
+}
+$('#listaPrecio,#checkIVAProducto,#precio').on('change keyup', actualizarPrecio);
+$('#caja').on('change keyup', calcularSubtotal);
+// Cuando cambia cantidad, recalcula cajas y subtotal
+$('#cantidad').on('change keyup', function(){
+    let cantidadTotal = parseFloat($(this).val()) || 0;
+    let cajas = cantidadTotal / unidadesPorCaja; // calculo inverso
+    $('#caja').val(cajas.toFixed(2));
+
+    let precio = parseFloat($('#precio').val())||0;
+    $('#subtotal').val((cajas * precio).toFixed(2));
+});
+
+// Cuando cambia caja, actualiza cantidad (por si el usuario cambia cajas directamente)
+$('#caja').on('change keyup', function(){
+    let cajas = parseFloat($(this).val())||0;
+    let cantidadTotal = cajas * unidadesPorCaja; // normal
+    $('#cantidad').val(cantidadTotal);
+
+    let precio = parseFloat($('#precio').val())||0;
+    $('#subtotal').val((cajas * precio).toFixed(2));
+});
+
+
+// ================== AGREGAR PRODUCTO ==================
+$('#btnAgregar').on('click', function(){
+    let productoId = $("#idPR").val();
+    let producto = $('#descproducto').val();
+    let cantidad = parseFloat($('#caja').val());
+    let precio = parseFloat($('#precio').val());
+    let subtotal = parseFloat($('#subtotal').val());
+    let aplicaIVA = $('#checkIVAProducto').is(':checked');
+    let iva = aplicaIVA ? subtotal*0.19 : 0;
+    let total = subtotal + iva;
+
+    // Si envío para muestra, forzar totales en 0
+    if($('#envioMuestra').is(':checked')){
+        subtotal = 0; iva = 0; total = 0; precio = 0;
+    }
+
+    // ================== VALIDACIÓN DE IVA GLOBAL ==================
+    if (ivaGlobal === null) {
+        // Primer producto define la regla
+        ivaGlobal = aplicaIVA;
+    } else {
+        // Si ya hay regla definida y no coincide => error
+        if (ivaGlobal && !aplicaIVA) {
+            Swal.fire('❌ No permitido', 'No puede agregar un producto sin IVA porque ya agregó uno con IVA.', 'error');
+            return;
+        }
+        if (!ivaGlobal && aplicaIVA) {
+            Swal.fire('❌ No permitido', 'No puede agregar un producto con IVA porque ya agregó uno sin IVA.', 'error');
+            return;
+        }
+    }
+    // =============================================================
+
+    detalle.push({productoId,producto, cantidad, precio, subtotal, iva, total});
+    renderTabla();
+    $('#form-producto input, #form-producto select').val('');
+    $('#producto').val(null).trigger('change');
+    actualizarTotales();
+});
+
+// ================== TABLA ==================
+function renderTabla(){
+    let tbody = $("#tablaDetalle tbody"); 
+    tbody.empty();
+    detalle.forEach((f,i)=>{
+        let precio = $('#envioMuestra').is(':checked') ? '0.00' : f.precio.toFixed(2);
+        let sub = $('#envioMuestra').is(':checked') ? '0.00' : f.subtotal.toFixed(2);
+        let iva = $('#envioMuestra').is(':checked') ? '0.00' : f.iva.toFixed(2);
+        let tot = $('#envioMuestra').is(':checked') ? '0.00' : f.total.toFixed(2);
+
+        tbody.append(`<tr>
+            <td>${f.producto}</td>
+            <td>${$('#envioMuestra').is(':checked') ? f.cantidad.toFixed(2) : f.cantidad.toFixed(2)}</td>
+            <td>${precio}</td>
+            <td>${sub}</td>
+            <td>${iva}</td>
+            <td>${tot}</td>
+            <td><button class="btn btn-danger btn-sm eliminar" data-i="${i}">🗑️</button></td>
+        </tr>`);
+    });
+}
+
+// ================== ENVÍO PARA MUESTRA ==================
+$('#envioMuestra').on('change', function(){
+    if($(this).is(':checked')){
+        // Bloquear campos de precio y cantidad
+        // $('#precio,#cantidad,#caja,#checkIVAProducto,#listaPrecio').prop('disabled', true);
+    } else {
+        $('#precio,#cantidad,#caja,#checkIVAProducto,#listaPrecio').prop('disabled', false);
+        actualizarPrecio();
+    }
+    renderTabla();
+    actualizarTotales();
+});
+
+$(document).on('click','.eliminar',function(){
+    let i = $(this).data('i'); detalle.splice(i,1);
+    renderTabla(); actualizarTotales();
+});
+
+// ================== TOTALES ==================
+function actualizarTotales(){
+    if($('#envioMuestra').is(':checked')){
+        $('#totalSubtotal').text('0.00');
+        $('#totalIVA').text('0.00');
+        $('#totalFinal').text('0.00');
+        return;
+    }
+    let subtotal = detalle.reduce((a,f)=>a+f.subtotal,0);
+    let iva = detalle.reduce((a,f)=>a+f.iva,0);
+    let total = detalle.reduce((a,f)=>a+f.total,0);
+    $('#totalSubtotal').text(subtotal.toFixed(2));
+    $('#totalIVA').text(iva.toFixed(2));
+    $('#totalFinal').text(total.toFixed(2));
+}
+
+// ================== ENVÍO PARA MUESTRA ==================
+$('#envioMuestra').on('change', function(){
+    renderTabla();
+    actualizarTotales();
+    // también poner campos del formulario en 0
+    if($(this).is(':checked')){
+        $('#precio,#subtotal').val('0.00');
+    } else {
+        actualizarPrecio();
+    }
+});
+
+// ================== GUARDAR PEDIDO ==================
+$('#formPedido').on('submit', function(e){
+    e.preventDefault();
+
+    if(detalle.length == 0){
+        Swal.fire("Agregue al menos un producto");
+        return;
+    }
+
+    let formData = new FormData(this);
+    formData.append('detalle', JSON.stringify(detalle));
 
     $.ajax({
-        url: 'lista_ventas_por_facturar.php',
-        method: 'GET',
-        data: {
-            documento: dni
+        url: 'ajax.php?action=save_pedido',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(resp){
+            if(resp.success){
+                Swal.fire({
+                    icon: 'success',
+                    title: '✅ Pedido guardado',
+                    text: `Número: ${resp.numero_pedido}`,
+                }).then(() => {
+                    // Abrir el PDF del pedido en otra ventana
+                    window.open('docpedido.php?id_pedido=' + encodeURIComponent(resp.id_pedido), '_blank');
+                });
+            } else {
+                Swal.fire('❌ Error', resp.message, 'error');
+            }
         },
-        success: function(data) {
-            $('#contenidoModalFacturas').html(data);
-        },
-        error: function() {
-            $('#contenidoModalFacturas').html(
-                '<div class="alert alert-danger">Error al cargar los datos.</div>');
+        error: function(xhr){
+            console.log(xhr.responseText);
+            Swal.fire('Error','No se pudo guardar','error');
         }
     });
 });
+
 </script>
+
+</body>
+</html>

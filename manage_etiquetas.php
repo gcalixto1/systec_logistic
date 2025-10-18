@@ -1,11 +1,11 @@
 <?php
 include('conexionfin.php');
 
-$id = isset($_GET['categoria_id']) ? intval($_GET['categoria_id']) : 0;
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $meta = array();
 
 if ($id > 0) {
-    $query = $conexion->query("SELECT * FROM categoria WHERE categoria_id = $id");
+    $query = $conexion->query("SELECT * FROM etiquetas WHERE id = $id");
     if ($query && $query->num_rows > 0) {
         $meta = $query->fetch_assoc();
     }
@@ -23,8 +23,9 @@ if ($id > 0) {
                             <input type="hidden" name="id" value="<?php echo $id; ?>">
                         </div>
                     <div class="form-group col-md-12">
-                            <label for="name">Categoria</label>
-                            <input type="text" class="form-control" name="categoria_des" id="categoria_des" value="<?php echo isset($meta['categoria_des']) ? htmlspecialchars($meta['categoria_des']) : ''; ?>" required>  
+                            <label for="name">Etiqueta</label>
+                            <input type="text" name="etiqueta" id="etiqueta" class="form-control" placeholder="Ingrese una etiqueta"
+                              value="<?php echo isset($meta['etiqueta']) ? htmlspecialchars($meta['etiqueta']) : ''; ?>" required>  
                         </div>
                     </div>
                 </div>
@@ -38,13 +39,13 @@ if ($id > 0) {
         e.preventDefault();
         
         // Obtener el valor del campo categoria_des
-        var categoriaDes = $('#categoria_des').val().trim();
+        var categoriaDes = $('#etiqueta').val().trim();
         
         // Validar si el campo está vacío
         if (categoriaDes === "") {
             Swal.fire({
                 title: 'Error!',
-                text: 'El campo de categoría no puede estar vacío.',
+                text: 'El campo de Etiqueta no puede estar vacío.',
                 icon: 'error',
                 confirmButtonColor: '#d33',
                 confirmButtonText: 'OK'
@@ -54,7 +55,7 @@ if ($id > 0) {
 
         start_load();
         $.ajax({
-            url: 'ajax.php?action=save_categorias',
+            url: 'ajax.php?action=save_etiquetas',
             method: 'POST',
             data: $(this).serialize(),
             success: function (resp) {

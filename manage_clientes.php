@@ -1,31 +1,15 @@
 <?php
 include('conexionfin.php');
 
-$id = isset($_GET['idcliente']) ? $_GET['idcliente'] : '';
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $meta = array();
-if (!empty($id)) {
-    $id = intval($id);
-    $query = $conexion->query("SELECT * FROM cliente LEFT JOIN cliente_direccion ON cliente_direccion.cliente_dni = cliente.dni  WHERE idcliente = $id");
-    if ($query) {
-        $cliente = $query->fetch_assoc();
-        if ($cliente) {
-            $meta = $cliente;
-        }
+
+if ($id > 0) {
+    $query = $conexion->query("SELECT * FROM clientes WHERE id = $id");
+    if ($query && $query->num_rows > 0) {
+        $meta = $query->fetch_assoc();
     }
 }
-
-require_once("includes/class.php");
-$pro = new Action();
-
-$departamentoSeleccionado = isset($_POST['departamento']) ? $_POST['departamento'] : (isset($meta['departamento']) ? $meta['departamento'] : '');
-$municipioSeleccionado = isset($_POST['municipio']) ? $_POST['municipio'] : (isset($meta['municipio']) ? $meta['municipio'] : '');
-
-$departamentos = $pro->ListarDepartamentos();
-$municipios = $departamentoSeleccionado ? $pro->ListarMunicipios($departamentoSeleccionado) : [];
-$documentos = $pro->ListarDocumentos();
-
-$busqueda = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
-$actividades = $pro->ListarActividades($busqueda);
 ?>
 
 <div class="container-fluid">
@@ -37,21 +21,18 @@ $actividades = $pro->ListarActividades($busqueda);
                     <div class="row">
                         <input type="hidden" name="id" value="<?php echo $id; ?>">
 
-                        <!-- Tipo de Cliente -->
+                        <!-- NIT -->
                         <div class="form-group col-md-6">
-                            <label for="tipo_contribuyente">Tipo Cliente</label>
-                            <select name="tipo_contribuyente" id="tipo_contribuyente" class="form-control" required>
-                                <option value="">SELECCIONE</option>
-                                <option value="1" <?= (isset($meta['tipo_contribuyente']) && $meta['tipo_contribuyente'] == 1) ? 'selected' : ''; ?>>PERSONA NATURAL</option>
-                                <option value="2" <?= (isset($meta['tipo_contribuyente']) && $meta['tipo_contribuyente'] == 2) ? 'selected' : ''; ?>>PERSONA JURÍDICA</option>
-                            </select>
+                            <label for="nit">NIT</label>
+                            <input type="text" name="nit" id="nit" class="form-control" required
+                                value="<?php echo isset($meta['nit']) ? htmlspecialchars($meta['nit']) : ''; ?>">
                         </div>
 
-                        <!-- Nombre / Razón Social -->
+                        <!-- Nombre Cliente -->
                         <div class="form-group col-md-6">
-                            <label for="nombre">Nombre / Razón Social</label>
-                            <input type="text" name="nombre" id="nombre" class="form-control" required
-                                value="<?php echo isset($meta['nombre']) ? htmlspecialchars($meta['nombre']) : ''; ?>">
+                            <label for="nombre_cliente">Nombre del Cliente</label>
+                            <input type="text" name="nombre_cliente" id="nombre_cliente" class="form-control" required
+                                value="<?php echo isset($meta['nombre_cliente']) ? htmlspecialchars($meta['nombre_cliente']) : ''; ?>">
                         </div>
 
                         <!-- Nombre Comercial -->
@@ -61,36 +42,83 @@ $actividades = $pro->ListarActividades($busqueda);
                                 value="<?php echo isset($meta['nombre_comercial']) ? htmlspecialchars($meta['nombre_comercial']) : ''; ?>">
                         </div>
 
-                        <!-- Tipo Documento -->
-                        <div class="form-group col-md-6">
-                            <label for="tipo_documento">Tipo Documento</label>
-                            <select name="tipo_documento" id="tipo_documento" class="form-control" required>
-                                <option value="">-- SELECCIONE --</option>
-                                <?php foreach ($documentos as $doc): ?>
-                                <option value="<?php echo $doc['codigo']; ?>"
-                                    <?php echo (isset($meta['tipo_documento']) && $meta['tipo_documento'] == $doc['codigo']) ? 'selected' : ''; ?>>
-                                    <?php echo $doc['valor']; ?>
-                                </option>
-                                <?php endforeach; ?>
+                        <!-- Tiene Sedes -->
+                        <div class="form-group col-md-3">
+                            <label for="tiene_sedes">¿Tiene Sedes?</label>
+                            <select name="tiene_sedes" id="tiene_sedes" class="form-control">
+                                <option value="NO" <?= (isset($meta['tiene_sedes']) && $meta['tiene_sedes'] == 'NO') ? 'selected' : ''; ?>>NO</option>
+                                <option value="SI" <?= (isset($meta['tiene_sedes']) && $meta['tiene_sedes'] == 'SI') ? 'selected' : ''; ?>>SÍ</option>
                             </select>
                         </div>
 
-                        <!-- DNI / NIT -->
+                        <!-- Estatus Cliente -->
+                        <div class="form-group col-md-3">
+                            <label for="estatus_cliente">Estatus</label>
+                            <select name="estatus_cliente" id="estatus_cliente" class="form-control">
+                                <option value="ACTIVO" <?= (isset($meta['estatus_cliente']) && $meta['estatus_cliente'] == 'ACTIVO') ? 'selected' : ''; ?>>ACTIVO</option>
+                                <option value="INACTIVO" <?= (isset($meta['estatus_cliente']) && $meta['estatus_cliente'] == 'INACTIVO') ? 'selected' : ''; ?>>INACTIVO</option>
+                            </select>
+                        </div>
+
+                        <!-- Asesor -->
                         <div class="form-group col-md-6">
-                            <label for="dni">Número de Documento</label>
-                            <input type="text" name="dni" id="dni" class="form-control" required
-                                value="<?php echo isset($meta['dni']) ? htmlspecialchars($meta['dni']) : ''; ?>">
+                            <label for="asesor_handy_plast">Asesor Handy Plast</label>
+                            <input type="text" name="asesor_handy_plast" id="asesor_handy_plast" class="form-control"
+                                value="<?php echo isset($meta['asesor_handy_plast']) ? htmlspecialchars($meta['asesor_handy_plast']) : ''; ?>">
+                        </div>
+
+                        <!-- Plazo Pago -->
+                        <div class="form-group col-md-3">
+                            <label for="plazos_pago_dias">Plazo de Pago (días)</label>
+                            <input type="number" name="plazos_pago_dias" id="plazos_pago_dias" class="form-control"
+                                value="<?php echo isset($meta['plazos_pago_dias']) ? (int)$meta['plazos_pago_dias'] : 0; ?>">
+                        </div>
+
+                        <!-- Lista de Precios -->
+                        <div class="form-group col-md-3">
+                            <label for="listas_precio_habilitadas">Listas de Precio (1 a 5)</label>
+                            <input type="number" name="listas_precio_habilitadas" id="listas_precio_habilitadas" class="form-control"
+                                min="1" max="5"
+                                value="<?php echo isset($meta['listas_precio_habilitadas']) ? (int)$meta['listas_precio_habilitadas'] : 1; ?>">
+                        </div>
+
+                        <!-- Nombre Sede -->
+                        <div class="form-group col-md-6">
+                            <label for="nombre_sede">Nombre de la Sede</label>
+                            <input type="text" name="nombre_sede" id="nombre_sede" class="form-control"
+                                value="<?php echo isset($meta['nombre_sede']) ? htmlspecialchars($meta['nombre_sede']) : ''; ?>">
+                        </div>
+
+                        <!-- Dirección Sede -->
+                        <div class="form-group col-md-6">
+                            <label for="direccion_sede">Dirección de la Sede</label>
+                            <input type="text" name="direccion_sede" id="direccion_sede" class="form-control"
+                                value="<?php echo isset($meta['direccion_sede']) ? htmlspecialchars($meta['direccion_sede']) : ''; ?>">
+                        </div>
+
+                        <!-- Ciudad -->
+                        <div class="form-group col-md-6">
+                            <label for="ciudad">Ciudad</label>
+                            <input type="text" name="ciudad" id="ciudad" class="form-control"
+                                value="<?php echo isset($meta['ciudad']) ? htmlspecialchars($meta['ciudad']) : ''; ?>">
+                        </div>
+
+                        <!-- Departamento -->
+                        <div class="form-group col-md-6">
+                            <label for="departamento">Departamento</label>
+                            <input type="text" name="departamento" id="departamento" class="form-control"
+                                value="<?php echo isset($meta['departamento']) ? htmlspecialchars($meta['departamento']) : ''; ?>">
                         </div>
 
                         <!-- Teléfono 1 -->
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-3">
                             <label for="telefono1">Teléfono 1</label>
                             <input type="text" name="telefono1" id="telefono1" class="form-control"
                                 value="<?php echo isset($meta['telefono1']) ? htmlspecialchars($meta['telefono1']) : ''; ?>">
                         </div>
 
                         <!-- Teléfono 2 -->
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-3">
                             <label for="telefono2">Teléfono 2</label>
                             <input type="text" name="telefono2" id="telefono2" class="form-control"
                                 value="<?php echo isset($meta['telefono2']) ? htmlspecialchars($meta['telefono2']) : ''; ?>">
@@ -98,56 +126,9 @@ $actividades = $pro->ListarActividades($busqueda);
 
                         <!-- Correo -->
                         <div class="form-group col-md-6">
-                            <label for="correo">Correo</label>
-                            <input type="email" name="correo" id="correo" class="form-control"
-                                value="<?php echo isset($meta['correo']) ? htmlspecialchars($meta['correo']) : ''; ?>">
-                        </div>
-
-                        <!-- Estatus -->
-                        <div class="form-group col-md-6">
-                            <label for="estatus">Estatus</label>
-                            <select name="estatus" id="estatus" class="form-control">
-                                <option value="ACTIVO" <?= (isset($meta['estatus']) && $meta['estatus'] == 'ACTIVO') ? 'selected' : ''; ?>>ACTIVO</option>
-                                <option value="INACTIVO" <?= (isset($meta['estatus']) && $meta['estatus'] == 'INACTIVO') ? 'selected' : ''; ?>>INACTIVO</option>
-                            </select>
-                        </div>
-
-                        <!-- Asesor -->
-                        <div class="form-group col-md-6">
-                            <label for="asesor">Asesor Handy Plast</label>
-                            <input type="text" name="asesor" id="asesor" class="form-control"
-                                value="<?php echo isset($meta['asesor']) ? htmlspecialchars($meta['asesor']) : ''; ?>">
-                        </div>
-
-                        <!-- Plazo de Pago -->
-                        <div class="form-group col-md-6">
-                            <label for="plazo_pago_dias">Plazo de Pago (días)</label>
-                            <input type="number" name="plazo_pago_dias" id="plazo_pago_dias" class="form-control"
-                                value="<?php echo isset($meta['plazo_pago_dias']) ? (int)$meta['plazo_pago_dias'] : 0; ?>">
-                        </div>
-
-                        <!-- Listas de precio -->
-                        <div class="form-group col-md-6">
-                            <label for="listas_precio_habilitadas">Listas de Precio (1 a 5)</label>
-                            <input type="number" name="listas_precio_habilitadas" id="listas_precio_habilitadas" class="form-control"
-                                min="1" max="5"
-                                value="<?php echo isset($meta['listas_precio_habilitadas']) ? (int)$meta['listas_precio_habilitadas'] : 1; ?>">
-                        </div>
-
-                        <!-- Tiene Sedes -->
-                        <div class="form-group col-md-6">
-                            <label for="tiene_sedes">¿Tiene Sedes?</label>
-                            <select name="tiene_sedes" id="tiene_sedes" class="form-control">
-                                <option value="0" <?= (isset($meta['tiene_sedes']) && $meta['tiene_sedes'] == 0) ? 'selected' : ''; ?>>NO</option>
-                                <option value="1" <?= (isset($meta['tiene_sedes']) && $meta['tiene_sedes'] == 1) ? 'selected' : ''; ?>>SÍ</option>
-                            </select>
-                        </div>
-
-                        <!-- Dirección general si no hay sedes -->
-                        <div class="form-group col-md-12">
-                            <label for="direccion_principal">Dirección Principal (si no tiene sedes)</label>
-                            <input type="text" name="direccion_principal" id="direccion_principal" class="form-control"
-                                value="<?php echo isset($meta['direccion_principal']) ? htmlspecialchars($meta['direccion_principal']) : ''; ?>">
+                            <label for="correo_electronico">Correo Electrónico</label>
+                            <input type="email" name="correo_electronico" id="correo_electronico" class="form-control"
+                                value="<?php echo isset($meta['correo_electronico']) ? htmlspecialchars($meta['correo_electronico']) : ''; ?>">
                         </div>
 
                     </div>
@@ -157,86 +138,24 @@ $actividades = $pro->ListarActividades($busqueda);
     </div>
 </div>
 
-
 <script>
 $('#savecliente').submit(function(e) {
     e.preventDefault();
-    var isValid = true;
-
-    if (isValid) {
-        start_load();
-        $.ajax({
-            url: 'ajax.php?action=save_clientes',
-            method: 'POST',
-            data: $(this).serialize(),
-            success: function(resp) {
-                if (resp == 1) {
-                    Swal.fire({
-                        title: 'Éxito!',
-                        text: 'El registro se guardó con éxito.',
-                        icon: 'success',
-                        confirmButtonColor: '#28a745',
-                        confirmButtonText: 'OK'
-                    }).then(() => location.reload());
-                }
-            }
-        });
-    }
-});
-
-$(document).ready(function() {
-    $('#departamento').change(function() {
-        var idDepartamento = $(this).val();
-        if (idDepartamento !== '') {
-            $.ajax({
-                url: 'cargar_municipios.php?id_departamento=' + idDepartamento,
-                method: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    var municipioSelect = $('#municipio');
-                    municipioSelect.empty();
-                    municipioSelect.append(
-                        '<option value="">-- SELECCIONE MUNICIPIO --</option>');
-                    $.each(response, function(index, municipio) {
-                        municipioSelect.append($('<option>', {
-                            value: municipio.codigo,
-                            text: municipio.valor
-                        }));
-                    });
-                }
-            });
-        }
-    });
-
-    <?php if (!empty($departamentoSeleccionado) && !empty($municipioSeleccionado)): ?>
     $.ajax({
-        url: 'ajax_municipios.php?id_departamento=' + '<?php echo $departamentoSeleccionado; ?>',
-        method: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            var municipioSelect = $('#municipio');
-            municipioSelect.empty();
-            municipioSelect.append('<option value="">-- SELECCIONE MUNICIPIO --</option>');
-            $.each(response, function(index, municipio) {
-                var selected = municipio.codigo ===
-                    '<?php echo $municipioSeleccionado; ?>' ? 'selected' : '';
-                municipioSelect.append($('<option>', {
-                    value: municipio.codigo,
-                    text: municipio.valor,
-                    selected: selected
-                }));
-            });
+        url: 'ajax.php?action=save_clientes',
+        method: 'POST',
+        data: $(this).serialize(),
+        success: function(resp) {
+            if (resp == 1) {
+                Swal.fire({
+                    title: 'Éxito!',
+                    text: 'El registro se guardó con éxito.',
+                    icon: 'success',
+                    confirmButtonColor: '#28a745',
+                    confirmButtonText: 'OK'
+                }).then(() => location.reload());
+            }
         }
-    });
-    <?php endif; ?>
-});
-
-$(document).ready(function() {
-    $('.select2').select2({
-        width: '100%',
-        height: '150%',
-        placeholder: "-- Seleccionar una actividad --",
-        allowClear: true
     });
 });
 </script>

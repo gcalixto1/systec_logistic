@@ -24,67 +24,62 @@
                 Producto</button>
         </div>
         <br />
-        <table class="table table-bordered table-responsive" id="borrower-list">
-            <colgroup>
-                <col width="5%">
-                <col width="30%">
-                <col width="30%">
-                <col width="15%">
-                <col width="35%">
-                <col width="30%">
-            </colgroup>
-            <thead>
-                <tr>
-                    <th class="text-center">#</th>
-                    <th class="text-center">Nombre Productos/Servicios</th>
-                    <th class="text-center">Categoria</th>
-                    <th class="text-center">Precio Venta</th>
-                    <th class="text-center">Stock</th>
-                    <th class="text-center">Opciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                $i = 1;
-                $qry = $conexion->query("SELECT * FROM producto INNER JOIN categoria ON categoria.categoria_id = producto.categoria");
-                while ($row = $qry->fetch_assoc()):
-                    ?>
-                <tr>
-                    <td style="font-size: 12px;" class="">
-                        <?php echo $i++ ?>
-                    </td>
-                    <td style="font-size: 12px;" class="">
-                        <?php echo $row['descripcion'] ?>
-                    </td>
-                    <td style="font-size: 12px;" class="">
-                        <?php echo $row['categoria_des'] ?>
-                    </td>
-                    <td style="font-size: 12px;" class="">
-                        <?php echo $row['precio'] ?>
-                    </td>
-                    <td style="font-size: 12px;" class="">
-                        <?php echo $row['existencia'] ?>
-                    </td>
+         <table class="table table-responsive" id="borrower-list">
+    <thead class="table-dark">
+        <tr>
+            <th class="text-center">STR ID</th>
+            <th class="text-center">CÓDIGO INTERNO</th>
+            <th class="text-center">DESCRIPCIÓN</th>
+            <th class="text-center">FAMILIA</th>
+            <th class="text-center">MICRAJE</th>
+            <th class="text-center">REF 1</th>
+            <th class="text-center">REF 2</th>
+            <th class="text-center">RELACIÓN</th>
+            <th class="text-center">CALIBRE</th>
+            <th class="text-center">UNIDAD DE EMBALAJE</th>
+            <th class="text-center">PESO POR UNIDAD KG</th>
+            <th class="text-center">PESO POR PACA/CAJA</th>
+             <th class="text-center">PRECIO FACTURADO L5</th>
+            <th class="text-center">PRECIO REMISIONADO L5</th>
+           
+            <th class="text-center">Opciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        $qry = $conexion->query("SELECT * FROM producto");
+        while ($row = $qry->fetch_assoc()):
+        ?>
+            <tr>
+                <td style="font-size: 12px;"><?php echo $row['str_id'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['cod_producto'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['descripcion'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['familia'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['micraje'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['ref_1'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['ref_2'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['relacion'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['calibre'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['und_embalaje_minima'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['peso_kg'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['peso_kg_paca_caja'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['precio_remision_lista_5'] ?></td>
+                <td style="font-size: 12px;"><?php echo $row['precio_lista_5'] ?></td>
+                <td style="white-space: nowrap;">
+                    <button class="btn btn-success btn-sm edit_borrower" type="button"
+                        data-id="<?php echo $row['id_producto'] ?>">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm delete_borrower" type="button"
+                        data-id="<?php echo $row['id_producto'] ?>">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        <?php endwhile; ?>
+    </tbody>
+</table>
 
-                    <td style="white-space: nowrap;">
-                        <button class="btn btn-primary btn-sm add_borrower" type="button"
-                            data-id="<?php echo $row['codproducto'] ?>">
-                            <i class="fas fa-audio-description"></i>
-                        </button>
-                        <button class="btn btn-success btn-sm edit_borrower" type="button"
-                            data-id="<?php echo $row['codproducto'] ?>">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-danger btn-sm delete_borrower" type="button"
-                            data-id="<?php echo $row['codproducto'] ?>">
-                            <i class="fa fa-trash"></i>
-                        </button>
-                    </td>
-
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
 
     </div>
 </div>
@@ -98,22 +93,22 @@ $('#new_categoria').click(function() {
     uni_modal("Gestion de Categoria para Productos", "manage_categorias.php")
 })
 $('#borrower-list').on('click', '.edit_borrower', function() {
-    uni_modal("Modificar Productos", "manage_productos.php?codproducto=" + $(this).attr('data-id'))
+    uni_modal("Modificar Productos", "manage_productos.php?id_producto=" + $(this).attr('data-id'))
 })
 $('#borrower-list').on('click', '.add_borrower', function() {
-    uni_modal("Agregar Stock al Productos", "agregar_producto.php?codproducto=" + $(this).attr('data-id'))
+    uni_modal("Agregar Stock al Productos", "agregar_producto.php?id_producto=" + $(this).attr('data-id'))
 })
 $('#borrower-list').on('click', '.delete_borrower', function() {
     _conf("Esta seguro que quiere eliminar este producto?", "delete_borrower", [$(this).attr('data-id')])
 })
 
-function delete_borrower($codproducto) {
+function delete_borrower($id_producto) {
     start_load()
     $.ajax({
         url: 'ajax.php?action=delete_producto',
         method: 'POST',
         data: {
-            codproducto: $codproducto
+            id_producto: $id_producto
         },
         success: function(resp) {
             if (resp == 1) {

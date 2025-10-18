@@ -12,7 +12,7 @@ if (!isset($_SESSION['login_idusuario'])) {
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>systec POS</title>
+    <title>systec logistic</title>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
@@ -47,6 +47,9 @@ if (!isset($_SESSION['login_idusuario'])) {
     <script src="assets/DataTables/pdfmake-0.1.36/vfs_fonts.js"></script>
     <script src="assets/DataTables/Buttons-1.5.6/js/buttons.html5.min.js"></script>
 
+     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
 </head>
 <style>
 body {
@@ -62,6 +65,16 @@ body {
     width: 50% !important;
     max-width: unset;
 }
+.modal-fullscreen {
+  max-width: 100%;
+  margin: 0;
+}
+
+.modal-fullscreen .modal-content {
+  height: 100vh;
+  border-radius: 0;
+}
+
 </style>
 
 <body>
@@ -92,23 +105,26 @@ body {
             </div>
         </div>
     </div>
-    <div class="modal fade" id="uni_modal" role='dialog'>
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"></h5>
-                </div>
-                <div class="modal-body" required>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success" id='submit' onclick="$('#uni_modal form').submit()"><i
-                            class="fa fa-save"></i> Guardar</button>
-                    <button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-times"></i>
-                        Cancelar</button>
-                </div>
+    <div class="modal fade" id="uni_modal" role="dialog">
+<div class="modal-dialog modal-fullscreen" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"></h5>
+            </div>
+            <div class="modal-body" required>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id='submit' onclick="$('#uni_modal form').submit()">
+                    <i class="fa fa-save"></i> Guardar registro
+                </button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Cancelar
+                </button>
             </div>
         </div>
     </div>
+</div>
+
 
     <div class="modal fade" id="uni_modal2" role='dialog'>
         <div class="modal-dialog modal-lg" role="document">
@@ -181,6 +197,7 @@ body {
     </div>
 </body>
 <script>
+
 window.start_load = function() {
     $('body').prepend('<di id="preloader2"></di>')
 }
@@ -330,11 +347,13 @@ window.alert_toast = function($msg = 'TEST', $bg = 'success') {
     $('#alert_toast').toast({
         delay: 3000
     }).toast('show');
+    jQuery.noConflict();
 }
 $(document).ready(function() {
     $('#preloader').fadeOut('fast', function() {
         $(this).remove();
     })
+     jQuery.noConflict();
 })
 </script>
 

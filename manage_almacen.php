@@ -1,11 +1,11 @@
 <?php
 include('conexionfin.php');
 
-$id = isset($_GET['categoria_id']) ? intval($_GET['categoria_id']) : 0;
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $meta = array();
 
 if ($id > 0) {
-    $query = $conexion->query("SELECT * FROM categoria WHERE categoria_id = $id");
+    $query = $conexion->query("SELECT * FROM almacenes WHERE id = $id");
     if ($query && $query->num_rows > 0) {
         $meta = $query->fetch_assoc();
     }
@@ -19,12 +19,18 @@ if ($id > 0) {
             <div class="form-body">
                 <div class="card-body">
                     <div class="row">
-                    <div class="form-group has-feedback">
-                            <input type="hidden" name="id" value="<?php echo $id; ?>">
+                        <div class="form-group has-feedback">
+                             <input type="hidden" name="id" value="<?php echo $id; ?>">
                         </div>
-                    <div class="form-group col-md-12">
-                            <label for="name">Categoria</label>
-                            <input type="text" class="form-control" name="categoria_des" id="categoria_des" value="<?php echo isset($meta['categoria_des']) ? htmlspecialchars($meta['categoria_des']) : ''; ?>" required>  
+                        <div class="form-group col-md-6">
+                            <label for="name">codigo de lmacen</label>
+                            <input type="text" name="codigo" id="codigo" class="form-control"
+                                placeholder="codigo de almacen"  value="<?php echo isset($meta['codigo']) ? htmlspecialchars($meta['codigo']) : ''; ?>" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="name">Nombre de lmacen</label>
+                            <input type="text" name="nombre" id="nombre" class="form-control"
+                                placeholder="Ingrese nombre de almacen"  value="<?php echo isset($meta['nombre']) ? htmlspecialchars($meta['nombre']) : ''; ?>" required>
                         </div>
                     </div>
                 </div>
@@ -34,17 +40,18 @@ if ($id > 0) {
 </div>
 
 <script>
-    $('#saveapertura').submit(function (e) {
+    $('#saveapertura').submit(function(e) {
         e.preventDefault();
-        
+
         // Obtener el valor del campo categoria_des
-        var categoriaDes = $('#categoria_des').val().trim();
-        
+        var presentacion = $('#codigo').val().trim();
+        var presentacion1 = $('#nombre').val().trim();
+
         // Validar si el campo está vacío
-        if (categoriaDes === "") {
+        if (presentacion === "" && presentacion1 === "") {
             Swal.fire({
                 title: 'Error!',
-                text: 'El campo de categoría no puede estar vacío.',
+                text: 'Los campos no pueden estar vacíos.',
                 icon: 'error',
                 confirmButtonColor: '#d33',
                 confirmButtonText: 'OK'
@@ -54,10 +61,10 @@ if ($id > 0) {
 
         start_load();
         $.ajax({
-            url: 'ajax.php?action=save_categorias',
+            url: 'ajax.php?action=save_almacen',
             method: 'POST',
             data: $(this).serialize(),
-            success: function (resp) {
+            success: function(resp) {
                 if (resp == 1) {
                     Swal.fire({
                         title: 'Éxito!',

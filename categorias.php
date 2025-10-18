@@ -14,14 +14,14 @@
 </style>
 <div class="container-fluid">
     <div class="card-header">
-        <h4 class="card-title text-black"><i class="fa fa-truck"></i> Gestion de Categorias</h4>
+        <h4 class="card-title text-black"><i class="fa fa-truck"></i> Gestion de Familias</h4>
     </div>
     <br>
     <div class="col-lg-12">
 
         <div class="col-sm-12 col-xs-12 text-right">
             <button class="btn btn-success btn-lg" type="button" id="new_categoria"><i class="fa fa-plus"></i> Nueva
-                Categoria</button>
+                Familias</button>
         </div>
         <br />
 
@@ -73,13 +73,13 @@
 <script>
     $('#borrower-list').dataTable()
     $('#new_categoria').click(function () {
-        uni_modal("Gestion de Categorias", "manage_categorias.php")
+        uni_modal("Gestion de Famlias", "manage_categorias.php")
     })
     $('#borrower-list').on('click', '.edit_borrower', function () {
-        uni_modal("Modificar Categoria", "manage_categorias.php?categoria_id=" + $(this).attr('data-id'))
+        uni_modal("Modificar Familia", "manage_categorias.php?categoria_id=" + $(this).attr('data-id'))
     })
     $('#borrower-list').on('click', '.delete_borrower', function () {
-        _conf("Esta seguro que quiere eliminar esta categoria?", "delete_borrower", [$(this).attr('data-id')])
+        _conf("Esta seguro que quiere eliminar esta Familia?", "delete_borrower", [$(this).attr('data-id')])
     })
 
     function delete_borrower($categoria_id) {

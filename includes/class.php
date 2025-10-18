@@ -270,6 +270,150 @@ class Action
 		return $categoria;
 	}
 	#endregion
+	#region Etiquetas
+	function save_etiqueta()
+	{
+		extract($_POST);
+		$data = " etiqueta = '$etiqueta' ";
+		if (empty($id)) {
+			$save = $this->dbh->query("INSERT INTO etiquetas set " . $data);
+		} else {
+			$save = $this->dbh->query("UPDATE etiquetas set " . $data . " where id = " . $id);
+		}
+		if ($save) {
+			return 1;
+		}
+	}
+	function delete_etiqueta()
+	{
+		extract($_POST);
+		$delete = $this->dbh->query("DELETE FROM etiquetas where id = " . $id);
+		if ($delete)
+			return 1;
+	}
+	public function Listaretiquetas()
+	{
+		$sql = "SELECT * FROM etiquetas ORDER BY etiqueta ASC";
+
+		$result = mysqli_query($this->dbh, $sql);
+
+		$categoria = array();
+		if ($result) {
+			while ($row = mysqli_fetch_assoc($result)) {
+				$categoria[] = $row;
+			}
+		}
+		return $categoria;
+	}
+	#endregion
+	#region Tipo_Producto
+	function save_tipo()
+	{
+		extract($_POST);
+		$data = " tipo = '$tipo' ";
+		if (empty($id)) {
+			$save = $this->dbh->query("INSERT INTO tipo_producto set " . $data);
+		} else {
+			$save = $this->dbh->query("UPDATE tipo_producto set " . $data . " where id = " . $id);
+		}
+		if ($save) {
+			return 1;
+		}
+	}
+	function delete_tipo()
+	{
+		extract($_POST);
+		$delete = $this->dbh->query("DELETE FROM tipo_producto where id = " . $id);
+		if ($delete)
+			return 1;
+	}
+	public function Listartipos()
+	{
+		$sql = "SELECT * FROM tipo_producto ORDER BY tipo	 ASC";
+
+		$result = mysqli_query($this->dbh, $sql);
+
+		$categoria = array();
+		if ($result) {
+			while ($row = mysqli_fetch_assoc($result)) {
+				$categoria[] = $row;
+			}
+		}
+		return $categoria;
+	}
+	#endregion
+	#region UMB
+	function save_umb()
+	{
+		extract($_POST);
+		$data = " umb = '$umb' ";
+		if (empty($id)) {
+			$save = $this->dbh->query("INSERT INTO umbs set " . $data);
+		} else {
+			$save = $this->dbh->query("UPDATE umbs set " . $data . " where id = " . $id);
+		}
+		if ($save) {
+			return 1;
+		}
+	}
+	function delete_umb()
+	{
+		extract($_POST);
+		$delete = $this->dbh->query("DELETE FROM umbs where id = " . $id);
+		if ($delete)
+			return 1;
+	}
+	public function Listarumbs()
+	{
+		$sql = "SELECT * FROM umbs ORDER BY umb	 ASC";
+
+		$result = mysqli_query($this->dbh, $sql);
+
+		$categoria = array();
+		if ($result) {
+			while ($row = mysqli_fetch_assoc($result)) {
+				$categoria[] = $row;
+			}
+		}
+		return $categoria;
+	}
+	#endregion
+	#region Relaciones
+	function save_relacion()
+	{
+		extract($_POST);
+		$data = " relacion = '$relacion' ";
+		if (empty($id)) {
+			$save = $this->dbh->query("INSERT INTO relaciones set " . $data);
+		} else {
+			$save = $this->dbh->query("UPDATE relaciones set " . $data . " where id = " . $id);
+		}
+		if ($save) {
+			return 1;
+		}
+	}
+	function delete_relacion()
+	{
+		extract($_POST);
+		$delete = $this->dbh->query("DELETE FROM relaciones where id = " . $id);
+		if ($delete)
+			return 1;
+	}
+	public function Listarrelaciones()
+	{
+		$sql = "SELECT * FROM relaciones ORDER BY relacion	 ASC";
+
+		$result = mysqli_query($this->dbh, $sql);
+
+		$categoria = array();
+		if ($result) {
+			while ($row = mysqli_fetch_assoc($result)) {
+				$categoria[] = $row;
+			}
+		}
+		return $categoria;
+	}
+	#endregion
 	#region Presentacion
 	function save_presentacion()
 	{
@@ -279,6 +423,20 @@ class Action
 			$save = $this->dbh->query("INSERT INTO presentacion set " . $data);
 		} else {
 			$save = $this->dbh->query("UPDATE presentacion set " . $data . " where categoria_id = " . $id);
+		}
+		if ($save) {
+			return 1;
+		}
+	}
+	function save_almacen()
+	{
+		extract($_POST);
+		$data = " codigo = '$codigo'";
+		$data .= ", nombre = '$nombre'";
+		if (empty($id)) {
+			$save = $this->dbh->query("INSERT INTO almacenes set " . $data);
+		} else {
+			$save = $this->dbh->query("UPDATE almacenes set " . $data . " where id = " . $id);
 		}
 		if ($save) {
 			return 1;
@@ -308,47 +466,47 @@ class Action
 	#endregion
 	#region Clientes
 	function save_cliente()
-{
-    extract($_POST);
+	{
+		extract($_POST);
 
-    // Asegura valores por defecto
-    $estatus = isset($estatus) ? $estatus : 'ACTIVO';
-    $tiene_sedes = isset($tiene_sedes) ? 1 : 0; // Asumimos checkbox o similar
-    $plazo_pago_dias = isset($plazo_pago_dias) ? intval($plazo_pago_dias) : 0;
-    $listas_precio_habilitadas = isset($listas_precio_habilitadas) ? intval($listas_precio_habilitadas) : 1;
+		// Valores por defecto
+		$estatus_cliente = isset($estatus_cliente) ? $estatus_cliente : 'ACTIVO';
+		$tiene_sedes = isset($tiene_sedes) && $tiene_sedes == 'SI' ? "'SI'" : "'NO'";
+		$plazos_pago_dias = isset($plazos_pago_dias) ? intval($plazos_pago_dias) : 0;
+		$listas_precio_habilitadas = isset($listas_precio_habilitadas) ? intval($listas_precio_habilitadas) : 1;
 
-    // Construcción segura del string para consulta SQL
-    $data = "dni = '$dni'";
-    $data .= ", tipo_documento = '$tipo_documento'";
-    $data .= ", nombre = '$nombre'";
-    $data .= ", nombre_comercial = '$nombre_comercial'";
-    $data .= ", tipo_contribuyente = '$tipo_contribuyente'";
-    $data .= ", estatus = '$estatus'";
-    $data .= ", asesor = '$asesor'";
-    $data .= ", plazo_pago_dias = $plazo_pago_dias";
-    $data .= ", listas_precio_habilitadas = $listas_precio_habilitadas";
-    $data .= ", telefono1 = '$telefono1'";
-    $data .= ", telefono2 = '$telefono2'";
-    $data .= ", correo = '$correo'";
-    $data .= ", tiene_sedes = $tiene_sedes";
+		// Construcción segura de datos
+		$data = "nit = '" . mysqli_real_escape_string($this->dbh, $nit) . "'";
+		$data .= ", nombre_cliente = '" . mysqli_real_escape_string($this->dbh, $nombre_cliente) . "'";
+		$data .= ", nombre_comercial = '" . mysqli_real_escape_string($this->dbh, $nombre_comercial) . "'";
+		$data .= ", tiene_sedes = $tiene_sedes";
+		$data .= ", estatus_cliente = '" . mysqli_real_escape_string($this->dbh, $estatus_cliente) . "'";
+		$data .= ", asesor_handy_plast = '" . mysqli_real_escape_string($this->dbh, $asesor_handy_plast) . "'";
+		$data .= ", plazos_pago_dias = $plazos_pago_dias";
+		$data .= ", listas_precio_habilitadas = $listas_precio_habilitadas";
+		$data .= ", nombre_sede = '" . mysqli_real_escape_string($this->dbh, $nombre_sede) . "'";
+		$data .= ", direccion_sede = '" . mysqli_real_escape_string($this->dbh, $direccion_sede) . "'";
+		$data .= ", ciudad = '" . mysqli_real_escape_string($this->dbh, $ciudad) . "'";
+		$data .= ", departamento = '" . mysqli_real_escape_string($this->dbh, $departamento) . "'";
+		$data .= ", telefono1 = '" . mysqli_real_escape_string($this->dbh, $telefono1) . "'";
+		$data .= ", telefono2 = '" . mysqli_real_escape_string($this->dbh, $telefono2) . "'";
+		$data .= ", correo_electronico = '" . mysqli_real_escape_string($this->dbh, $correo_electronico) . "'";
 
-    // Evita inyección SQL usando consultas preparadas — si puedes, usa PDO o MySQLi con bind_param
-    if (empty($id)) {
-        $save = $this->dbh->query("INSERT INTO cliente SET $data");
-    } else {
-        $id = mysqli_real_escape_string($this->dbh, $id);
-        $save = $this->dbh->query("UPDATE cliente SET $data WHERE id = $id");
-    }
+		// Insertar o actualizar
+		if (empty($id)) {
+			$save = $this->dbh->query("INSERT INTO clientes SET $data");
+		} else {
+			$id = mysqli_real_escape_string($this->dbh, $id);
+			$save = $this->dbh->query("UPDATE clientes SET $data WHERE id = $id");
+		}
 
-    if ($save) {
-        if ($tiene_sedes) {
-            $this->save_clienteDireccion($this->dbh->insert_id ?? $id); // Puedes pasar el ID del cliente
-        }
-        return 1;
-    }
+		if ($save) {
+			return 1; // éxito
+		}
 
-    return 0; // En caso de error
-}
+		return 0; // error
+	}
+
 
 	function save_clienteDireccion()
 	{
@@ -375,29 +533,31 @@ class Action
 	function delete_cliente()
 	{
 		extract($_POST);
-		$delete = $this->dbh->query("DELETE FROM cliente where idcliente = " . $idcliente);
+		$delete = $this->dbh->query("DELETE FROM cliente where id = " . $id);
 		if ($delete)
 			return 1;
 	}
 	public function listarclientes($filtro)
 	{
-		// Evitar inyección SQL utilizando prepared statements
-		$consulta = "SELECT * FROM cliente WHERE nombre LIKE ?";
+		// Consulta para buscar por código (id o nit) o por nombre
+		$consulta = "SELECT * 
+                 FROM clientes 
+                 WHERE id LIKE ? 
+                    OR nit LIKE ? 
+                    OR nombre_cliente LIKE ?";
 
-		// Preparar la consulta
 		$stmt = $this->dbh->prepare($consulta);
 		if ($stmt === false) {
 			die("Error en la preparación de la consulta: " . $this->dbh->error);
 		}
 
-		// Agregar '%' al principio y al final del término de búsqueda para buscar coincidencias parciales
+		// Agregar '%' para búsqueda parcial
 		$filtro = "%" . $filtro . "%";
 
-		// Ejecutar la consulta con un parámetro
-		$stmt->bind_param("s", $filtro);
+		// Como usamos 3 placeholders, hay que pasar el mismo valor 3 veces
+		$stmt->bind_param("sss", $filtro, $filtro, $filtro);
 		$stmt->execute();
 
-		// Obtener los resultados
 		$result = $stmt->get_result();
 		$clientes = $result->fetch_all(MYSQLI_ASSOC);
 
@@ -405,6 +565,7 @@ class Action
 
 		return $clientes;
 	}
+
 	public function ListarDepartamentos()
 	{
 		$sql = "SELECT * FROM departamentos";
@@ -458,35 +619,59 @@ class Action
 	function save_proveedor()
 	{
 		extract($_POST);
-		// Construye la cadena de datos correctamente
-		$data = " proveedor = '$proveedor'";
-		$data .= ", documento = '$dni'";
-		$data .= ", telefono = '$telefono'";
-		$data .= ", direccion = '$direccion'";
-		$data .= ", tipoControbuyente = '$tipoControbuyente'";
-		$data .= ", correo = '$correo'";
-		$data .= ", tipoDoc = '$tipoDoc'";
 
-		// Evita inyección SQL usando consultas preparadas
+		// Construcción segura de los datos
+		$id = mysqli_real_escape_string($this->dbh, $id);
+		$data = " tipo_id = '$tipo_id'";
+		$data .= ", documento = '$documento'";
+		$data .= ", nombre_proveedor = '$nombre_proveedor'";
+		$data .= ", direccion = '$direccion'";
+		$data .= ", plazo = '$plazo'";
+		$data .= ", celular = '$celular'";
+		$data .= ", email = '$email'";
+		$data .= ", cupo_credito = '$cupo_credito'";
+		$data .= ", nombre_contacto = '$nombre_contacto'";
+
+		// Inserción o actualización
 		if (empty($id)) {
-			$save = $this->dbh->query("INSERT INTO proveedor SET " . $data);
+			$save = $this->dbh->query("INSERT INTO proveedores SET " . $data);
 		} else {
-			$id = mysqli_real_escape_string($this->dbh, $id); // Escapa el valor de $id
-			$save = $this->dbh->query("UPDATE proveedor SET " . $data . " WHERE idproveedor = $id");
+
+			$save = $this->dbh->query("UPDATE proveedores SET " . $data . " WHERE id = $id");
 		}
 
 		if ($save) {
-			$this->save_clienteDireccion(); // Llama a la función para guardar la dirección del cliente
 			return 1;
+		} else {
+			return 0;
 		}
 	}
+
 	function delete_proveedor()
 	{
 		extract($_POST);
-		$delete = $this->dbh->query("DELETE FROM proveedor where idproveedor = " . $idproveedor);
+		$delete = $this->dbh->query("DELETE FROM proveedores where id = " . $id);
 		if ($delete)
 			return 1;
 	}
+	function delete_pedidos()
+	{
+		extract($_POST);
+
+		// Primero eliminar los registros relacionados en detalle_pedidos
+		$delete_details = $this->dbh->query("DELETE FROM detalle_pedidos WHERE pedido_id = " . intval($idpedido));
+
+		// Luego eliminar el pedido si se eliminaron los detalles
+		if ($delete_details) {
+			$delete_pedido = $this->dbh->query("DELETE FROM pedidos WHERE id = " . intval($idpedido));
+			if ($delete_pedido) {
+				return 1;
+			}
+		}
+
+		return 0; // si algo falla
+	}
+
 	public function ListarProveedores()
 	{
 		$sql = "SELECT * FROM proveedor";
@@ -501,97 +686,76 @@ class Action
 		}
 		return $impuesto;
 	}
-	public function BuscarProveedores($search)
-	{
-		$sql = "SELECT idproveedor, proveedor FROM proveedores 
-				WHERE proveedor LIKE :search LIMIT 20";
-		$stmt = $this->dbh->prepare($sql);
-		$stmt->execute([':search' => '%' . $search . '%']);
-		return $stmt->fetchAll(PDO::FETCH_ASSOC);
-	}
+	// public function BuscarProveedores($search)
+	// {
+	// 	$sql = "SELECT idproveedor, proveedor FROM proveedores 
+	// 			WHERE proveedor LIKE :search LIMIT 20";
+	// 	$stmt = $this->dbh->prepare($sql);
+	// 	$stmt->execute([':search' => '%' . $search . '%']);
+	// 	return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	// }
 
 	#endregion
 	#region Producto
 	function save_productos()
 	{
-		// Escapar datos recibidos por POST
-		$descripcion = mysqli_real_escape_string($this->dbh, $_POST['descripcion'] ?? '');
-		$proveedor = mysqli_real_escape_string($this->dbh, $_POST['proveedor'] ?? '');
-		$precio_compra = mysqli_real_escape_string($this->dbh, $_POST['precio_compra'] ?? 0);
-		$precio = mysqli_real_escape_string($this->dbh, $_POST['precio'] ?? 0);
-		$existencia = mysqli_real_escape_string($this->dbh, $_POST['existencia'] ?? 0);
-		$exis_min = mysqli_real_escape_string($this->dbh, $_POST['exis_min'] ?? 0);
-		$codBarra = mysqli_real_escape_string($this->dbh, $_POST['codBarra'] ?? '');
-		$prop1 = mysqli_real_escape_string($this->dbh, $_POST['prop1'] ?? '');
-		$prop2 = mysqli_real_escape_string($this->dbh, $_POST['prop2'] ?? '');
-		$prop3 = mysqli_real_escape_string($this->dbh, $_POST['prop3'] ?? '');
-		$categoria = mysqli_real_escape_string($this->dbh, $_POST['categoria'] ?? '');
-		$fecha_vencimiento = mysqli_real_escape_string($this->dbh, $_POST['fecha_vencimiento'] ?? '');
-		$tipo_producto = mysqli_real_escape_string($this->dbh, $_POST['tipo_producto'] ?? '');
-		$exenta = mysqli_real_escape_string($this->dbh, $_POST['exenta'] ?? '0');
-		$iva = mysqli_real_escape_string($this->dbh, $_POST['iva'] ?? '0');
-		$id = mysqli_real_escape_string($this->dbh, $_POST['id'] ?? '');
+		$campos = [
+			'id_producto',
+			'str_id',
+			'cod_producto',
+			'descripcion',
+			'etiqueta',
+			'micraje',
+			'descripcion_sistema_contable',
+			'tipo',
+			'familia',
+			'ref_1',
+			'ref_2',
+			'relacion',
+			'calibre',
+			'und_embalaje_minima',
+			'peso_kg',
+			'peso_kg_paca_caja',
+			'umb',
+			'ref_tubo',
+			'peso_tubo',
+			'tiempo_produccion_paca',
+			'stock_minimo',
+			'precio_lista_5',
+			'precio_remision_lista_5',
+			'activo',
+			'lead_time'
+		];
 
-		$targetFilePath = "";
-		$data = "descripcion = '$descripcion',
-             proveedor = '$proveedor',
-             precio_compra = '$precio_compra',
-             precio = '$precio',
-             existencia = '$existencia',
-             exis_min = '$exis_min',
-             codBarra = '$codBarra',
-             prop1 = '$prop1',
-             prop2 = '$prop2',
-             prop3 = '$prop3',
-             categoria = '$categoria',
-             fecha_vencimiento = '$fecha_vencimiento',
-             tipo_producto = '$tipo_producto',
-             exentas = '$exenta',
-             iva = '$iva'";
-
-		// Manejo de imagen
-		if (!empty($_FILES['imagen_producto']['name'])) {
-			$targetDir = "img/productos/";
-			$fileName = uniqid() . "_" . basename($_FILES["imagen_producto"]["name"]);
-			$targetFilePath = $targetDir . $fileName;
-			$fileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
-
-			$allowedTypes = ['jpg', 'jpeg', 'png'];
-			if (in_array($fileType, $allowedTypes)) {
-				if (move_uploaded_file($_FILES["imagen_producto"]["tmp_name"], $targetFilePath)) {
-					if (!empty($id)) {
-						$result = $this->dbh->query("SELECT imagen_producto FROM producto WHERE codproducto = '$id'");
-						if ($result && $result->num_rows > 0) {
-							$row = $result->fetch_assoc();
-							if ($row['imagen_producto'] !== $targetFilePath) {
-								$data .= ", imagen_producto = '$targetFilePath'";
-							}
-						}
-					} else {
-						$data .= ", imagen_producto = '$targetFilePath'";
-					}
-				} else {
-					echo "Error al subir la imagen.";
-					return 0;
-				}
-			} else {
-				echo "Formato de imagen no permitido (solo jpg, jpeg, png).";
-				return 0;
+		$data = [];
+		foreach ($campos as $campo) {
+			$valor = $_POST[$campo] ?? null;
+			$valor_escapado = mysqli_real_escape_string($this->dbh, $valor);
+			if ($campo === 'activo') {
+				$valor_escapado = ($valor_escapado === '0' || strtolower($valor_escapado) === 'false') ? 0 : 1;
 			}
-		} else {
-			if (empty($id)) {
-				$data .= ", imagen_producto = 'img/ninguna.png'";
+			if ($campo !== 'id_producto') { // No incluir el id en SET
+				$data[] = "$campo = '$valor_escapado'";
 			}
 		}
 
-		// Ejecutar INSERT o UPDATE
-		if (empty($id)) {
-			$save = $this->dbh->query("INSERT INTO producto SET $data");
-			if ($save) {
-				$this->save_kardexproductos(); // Guardar en Kardex
-			}
+		// Campos automáticos
+		if (empty($_POST['id_producto'])) {
+			$data[] = "fecha_creacion = NOW()";
+		}
+		$data[] = "ultima_actualizacion = NOW()";
+
+		$setData = implode(", ", $data);
+		$id_producto = mysqli_real_escape_string($this->dbh, $_POST['id_producto'] ?? '');
+
+		if (empty($id_producto)) {
+			// INSERT
+			$query = "INSERT INTO producto SET $setData";
+			$save = $this->dbh->query($query);
 		} else {
-			$save = $this->dbh->query("UPDATE producto SET $data WHERE codproducto = '$id'");
+			// UPDATE
+			$query = "UPDATE producto SET $setData WHERE id_producto = '$id_producto'";
+			$save = $this->dbh->query($query);
 		}
 
 		if ($save) {
@@ -603,10 +767,11 @@ class Action
 	}
 
 
+
 	function delete_producto()
 	{
 		extract($_POST);
-		$delete = $this->dbh->query("DELETE FROM producto where codproducto = " . $codproducto);
+		$delete = $this->dbh->query("DELETE FROM producto where id_producto = " . $id_producto);
 		if ($delete)
 			return 1;
 	}
@@ -684,8 +849,12 @@ class Action
 
 	public function listarproductoauto($filtro)
 	{
-		// Evitar inyección SQL utilizando prepared statements
-		$consulta = "SELECT * FROM producto WHERE descripcion LIKE ?  OR codBarra LIKE ?";
+		// Consulta con los campos correctos de la tabla producto
+		$consulta = "SELECT * 
+                 FROM producto 
+                 WHERE descripcion LIKE ?  
+                    OR cod_producto LIKE ?  
+                    OR str_id LIKE ?";
 
 		// Preparar la consulta
 		$stmt = $this->dbh->prepare($consulta);
@@ -693,19 +862,21 @@ class Action
 			die("Error en la preparación de la consulta: " . $this->dbh->error);
 		}
 
-		// Agregar '%' al principio y al final del término de búsqueda para buscar coincidencias parciales
+		// Comodines para búsqueda parcial
 		$filtro = "%" . $filtro . "%";
 
-		// Ejecutar la consulta con un parámetro
-		$stmt->bind_param("ss", $filtro, $filtro);
+		// Vincular parámetros (tres veces porque hay 3 LIKE)
+		$stmt->bind_param("sss", $filtro, $filtro, $filtro);
 		$stmt->execute();
 
-		// Obtener los resultados
+		// Obtener resultados
 		$result = $stmt->get_result();
 		$productos = $result->fetch_all(MYSQLI_ASSOC);
 
+		// Cerrar statement
 		$stmt->close();
 
+		// Retornar array de productos
 		return $productos;
 	}
 
@@ -814,115 +985,102 @@ class Action
 	}
 	#endregion
 	#region Factura y Detalle
-	function save_factura()
+	#region Pedido y Detalle
+	public function save_pedido()
 	{
-		// Extraer y sanitizar los datos
-		extract($_POST);
-		$numeroALetras = new NumeroALetras();
-		if (isset($subtotal, $iva_impuesto, $totalpagar, $codcliente, $detalle, $prefix, $forma_pago)) {
-			$subtotal = $this->dbh->real_escape_string($subtotal);
-			$iva_impuesto = $this->dbh->real_escape_string($iva_impuesto);
-			$totalpagar = $this->dbh->real_escape_string($totalpagar);
-			$codcliente = $this->dbh->real_escape_string($codcliente);
-			$prefix = $this->dbh->real_escape_string($prefix);
-			$tipofactura = $prefix;
-			$letras = $numeroALetras->toMoney($totalpagar, 2, 'dolares', 'centavos');
-			$forma_pagos = $this->dbh->real_escape_string($forma_pago);
-			$idusuario = $_SESSION['login_idusuario'];
-			$estado = 'Pendiente';
-			$detalle = json_decode($detalle, true);
-			$csrf_tokenR = $this->dbh->real_escape_string($csrf_token);
+		// Validar datos recibidos
+		$cliente_id      = $this->dbh->real_escape_string($_POST['cliente_id'] ?? '');
+		$muestra      = $this->dbh->real_escape_string($_POST['envioMuestra'] ?? '');
+		$canal_venta     = $this->dbh->real_escape_string($_POST['canal_venta'] ?? '');
+		$plazo_pago_dias = $this->dbh->real_escape_string($_POST['plazo_pago_dias'] ?? '');
+		$tipo_transporte = $this->dbh->real_escape_string($_POST['tipo_transporte'] ?? '');
+		$observaciones   = $this->dbh->real_escape_string($_POST['observaciones'] ?? '');
+		$detalle         = json_decode($_POST['detalle'] ?? '[]', true);
 
-			if ($csrf_tokenR == $csrf_token) {
-				if (!is_array($detalle)) {
-					echo json_encode(['success' => false, 'message' => 'Formato de detalle incorrecto.']);
-					exit;
-				}
+		if (empty($cliente_id) || !is_array($detalle) || count($detalle) == 0) {
+			echo json_encode(['success' => false, 'message' => 'Datos incompletos']);
+			exit;
+		}
 
-				// Generar el número de factura único
-				$numerofactura = $this->generateCorrelativo($prefix);
+		$estatus = 'PENDIENTE';
+		$idusuario = $_SESSION['login_idusuario'] ?? 1;
 
-				// Verificar si ya existe una factura con el mismo numerofactura
-				$checkFactura = $this->dbh->prepare("SELECT COUNT(*) FROM factura WHERE numerofactura = ?");
-				$checkFactura->bind_param("s", $numerofactura);
-				$checkFactura->execute();
-				$checkFactura->bind_result($count);
-				$checkFactura->fetch();
-				$checkFactura->close();
+		// Correlativo
+		$consecutivo = $this->generateCorrelativo("PED");
+		$numero_pedido = "PED-" . $consecutivo;
 
-				if ($count > 0) {
-					echo json_encode(['success' => false, 'message' => 'Ya existe una factura con ese número.']);
-					exit;
-				}
+		$this->dbh->begin_transaction();
 
-				// Iniciar transacción
-				$this->dbh->begin_transaction();
+		try {
+			// Insertar pedido
+			$sql = "INSERT INTO pedidos SET 
+                numero_pedido='$numero_pedido',
+                cliente_id='$cliente_id',
+                canal_venta='$canal_venta',
+                plazo_pago_dias='$plazo_pago_dias',
+                tipo_transporte='$tipo_transporte',
+                observaciones='$observaciones',
+                estatus='$estatus',
+				usuario_id = $idusuario";
 
-				try {
-
-					$data_factura = "tipofactura = '$tipofactura'";
-					$data_factura .= ", numerofactura = '$numerofactura'";
-					$data_factura .= ", subtotal = '$subtotal'";
-					$data_factura .= ", iva_impuesto = '$iva_impuesto'";
-					$data_factura .= ", totalpagar = '$totalpagar'";
-					$data_factura .= ", letras = '$letras'";
-					$data_factura .= ", forma_pago = '$forma_pagos'";
-					$data_factura .= ", idusuario = '$idusuario'";
-					$data_factura .= ", idcliente = '$codcliente'";
-					$data_factura .= ", estado = '$estado'";
-
-					$save_factura = $this->dbh->query("INSERT INTO factura SET " . $data_factura);
-
-					if ($save_factura) {
-						$idfactura = $this->dbh->insert_id;
-
-						foreach ($detalle as $producto) {
-							if (!isset($producto['codproducto'], $producto['precio'], $producto['cantidad'])) {
-								throw new Exception("Datos del producto incompletos.");
-							}
-
-							$cod_producto = $this->dbh->real_escape_string($producto['codproducto']);
-							$precio_venta = $this->dbh->real_escape_string($producto['precio']);
-							$cantidad = $this->dbh->real_escape_string($producto['cantidad']);
-
-							$data_detalle = "cod_producto = '$cod_producto'";
-							$data_detalle .= ", precioventa = '$precio_venta'";
-							$data_detalle .= ", cantidad = '$cantidad'";
-							$data_detalle .= ", idfactura = '$idfactura'";
-
-							$save_detalle = $this->dbh->query("INSERT INTO detallefactura SET " . $data_detalle);
-
-							if (!$save_detalle) {
-								throw new Exception("Error al guardar el detalle de la factura: " . $this->dbh->error);
-							}
-
-							$descripcion = $this->dbh->real_escape_string("VENTA EN FACTURA: $numerofactura");
-
-							$save_kardexSalida = $this->save_kardex_producto_venta($cod_producto, $cantidad, $precio_venta, 'SALIDA', $descripcion);
-							if (!$save_kardexSalida) {
-								throw new Exception("Error al guardar el kardex de la factura: " . $this->dbh->error);
-							}
-						}
-
-						$this->dbh->commit();
-
-						// Generar un nuevo token CSRF y actualizar la cookie
-						$new_csrf_token = bin2hex(random_bytes(32));
-						$csrf_tokenR = $new_csrf_token;
-						echo json_encode(['success' => true, 'message' => 'Factura y detalles insertados correctamente.', 'idfactura' => $idfactura]);
-					} else {
-						throw new Exception('Error al insertar la factura.');
-					}
-				} catch (Exception $e) {
-					$this->dbh->rollback();
-					echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-				}
-			} else {
-				echo json_encode(['success' => false, 'message' => 'no funciona.']);
-				exit;
+			if (!$this->dbh->query($sql)) {
+				throw new Exception("Error al insertar pedido: " . $this->dbh->error);
 			}
+
+			$pedido_id = $this->dbh->insert_id;
+
+			if ($pedido_id == 0) {
+				throw new Exception("No se pudo obtener ID del pedido");
+			}
+
+			// Insertar detalle
+			// Insertar detalle
+			foreach ($detalle as $d) {
+				$pid     = $this->dbh->real_escape_string($d['productoId']);
+				$cant    = $this->dbh->real_escape_string($d['cantidad']);
+				$precio  = $this->dbh->real_escape_string($d['precio']);
+
+				$subtotal = $cant * $precio;
+				$iva      = $this->dbh->real_escape_string($d['iva']);
+				$total    = $subtotal + $iva;
+
+				// Determinar si es facturado
+				$facturado = ($iva > 0) ? "SI" : "NO";
+
+				$sql_det = "INSERT INTO detalle_pedidos SET
+                pedido_id='$pedido_id',
+                producto_id='$pid',
+                cantidad='$cant',
+                precio='$precio',
+                subtotal='$subtotal',
+                iva='$iva',
+                total='$total',
+                facturado='$facturado'"; // <-- IMPORTANTE: comillas para string
+
+				if (!$this->dbh->query($sql_det)) {
+					throw new Exception("Error al insertar detalle: " . $this->dbh->error);
+				}
+			}
+
+			$this->dbh->commit();
+
+			echo json_encode([
+				'success' => true,
+				'message' => 'Pedido guardado',
+				'id_pedido' => $pedido_id,
+				'numero_pedido' => $numero_pedido
+			]);
+		} catch (Exception $e) {
+			$this->dbh->rollback();
+			echo json_encode([
+				'success' => false,
+				'message' => $e->getMessage()
+			]);
 		}
 	}
+
+
+
 	function save_kardex_producto_venta($producto_id, $cantidadP, $precioP, $movimientosP, $descripcionP)
 	{
 		// Declarar variables
@@ -1059,7 +1217,7 @@ class Action
 		}
 	}
 	#endregion
-#region Notas de Crédito y Invalidaciones
+	#region Notas de Crédito y Invalidaciones
 	function save_NotaCredito()
 	{
 		extract($_POST);
@@ -1191,10 +1349,9 @@ class Action
 			]);
 		}
 		exit;
-
 	}
 	#endregion
-#region Sujetos Excluidos
+	#region Sujetos Excluidos
 	function save_SujetoExcluido()
 	{
 		$numero_control = $_POST['numero_control'] ?? '';
@@ -1301,4 +1458,280 @@ class Action
 			'message' => 'Venta Registrada correctamente. '
 		]);
 	}
+	function ingreso_orden_compra()
+	{
+		extract($_POST);
+
+		// === Validaciones iniciales ===
+		if (!isset($type)) {
+			echo json_encode(['success' => false, 'message' => 'Tipo de acción no especificado']);
+			return;
+		}
+
+		// === OBTENER DATOS DE ORDEN ===
+		if ($type == 'get') {
+			$id_oc = intval($id_oc);
+			$res = $this->dbh->query("SELECT oc.*, p.nombre_proveedor AS proveedor 
+			FROM orden_compra oc 
+			JOIN proveedores p ON oc.proveedor_id = p.id 
+			WHERE oc.id_oc = $id_oc");
+
+			if (!$res || $res->num_rows == 0) {
+				echo json_encode(['success' => false, 'message' => 'Orden no encontrada']);
+				return;
+			}
+
+			$row = $res->fetch_assoc();
+			$detalle = [];
+			$resDet = $this->dbh->query("SELECT id_detalle, producto, cantidad, precio, subtotal, iva, total, cantidad_recibida 
+			FROM orden_compra_detalle 
+			WHERE id_oc = $id_oc");
+
+			while ($r = $resDet->fetch_assoc()) {
+				$detalle[] = $r;
+			}
+
+			echo json_encode([
+				'success' => true,
+				'proveedor' => $row['proveedor'],
+				'fecha' => $row['fecha_oc'],
+				'estado' => $row['estado'] ?? 'PENDIENTE',
+				'detalle' => $detalle
+			]);
+			return;
+		}
+
+		// === GUARDAR INGRESO ===
+		if ($type == 'save') {
+			$id_oc = intval($id_oc);
+			$estado = mysqli_real_escape_string($this->dbh, $estado);
+			$detalle = json_decode($detalle, true);
+
+			if (!$id_oc || !$detalle) {
+				echo json_encode(['success' => false, 'message' => 'Datos incompletos']);
+				return;
+			}
+
+			// Actualizar detalle (cantidad recibida)
+			foreach ($detalle as $d) {
+				$id_detalle = intval($d['id_detalle']);
+				$cant_recibida = floatval($d['cantidad_recibida']);
+
+				$this->dbh->query("UPDATE orden_compra_detalle 
+				SET cantidad_recibida = $cant_recibida 
+				WHERE id_detalle = $id_detalle");
+
+				// (Opcional) Actualizar stock
+				$this->dbh->query("UPDATE productos p
+				JOIN orden_compra_detalle d ON p.nombre = d.producto
+				SET p.stock = p.stock + $cant_recibida
+				WHERE d.id_detalle = $id_detalle");
+			}
+
+			// Actualizar estado general
+			$this->dbh->query("UPDATE orden_compra SET estado = '$estado' WHERE id_oc = $id_oc");
+
+			echo json_encode(['success' => true, 'message' => 'Ingreso de orden guardado correctamente']);
+			return;
+		}
+
+		// === Acción no reconocida ===
+		echo json_encode(['success' => false, 'message' => 'Acción inválida']);
+	}
+	function get_orden()
+{
+    extract($_POST);
+    $id_oc = mysqli_real_escape_string($this->dbh, $id_oc);
+
+    // === Obtener datos de la orden ===
+    $orden = $this->dbh->query("SELECT o.numero_oc, o.fecha_oc, o.estado, p.nombre_proveedor AS proveedor
+                                FROM orden_compra o
+                                INNER JOIN proveedores p ON p.id = o.proveedor_id
+                                WHERE o.id_oc = '$id_oc' LIMIT 1");
+
+    if (!$orden || $orden->num_rows == 0) {
+        echo json_encode(['success' => false, 'message' => 'Orden no encontrada.']);
+        return;
+    }
+
+    $info = $orden->fetch_assoc();
+
+    // === Obtener detalle ===
+    $detalle = [];
+    $qdet = $this->dbh->query("SELECT 
+                                    d.id_detalle, 
+                                    d.producto, 
+                                    p.str_id AS id_interno, 
+                                    p.descripcion, 
+                                    d.cantidad, 
+                                    IFNULL(d.cantidad_recibida, 0) AS cantidad_recibida,
+                                    d.precio, 
+                                    p.umb, 
+                                    p.und_embalaje_minima
+                               FROM orden_compra_detalle d
+                               INNER JOIN producto p ON p.id_producto = d.producto
+                               WHERE d.id_oc = '$id_oc'");
+
+    while ($d = $qdet->fetch_assoc()) {
+        $detalle[] = [
+            'id_detalle' => $d['id_detalle'],
+            'producto' => $d['producto'],
+            'id_interno' => $d['id_interno'],
+            'descripcion' => $d['descripcion'],
+            'cantidad' => floatval($d['cantidad']),
+            'cantidad_recibida' => floatval($d['cantidad_recibida']),
+            'precio' => floatval($d['precio']),
+            'umb' => $d['umb'] ?? '',
+            'und_embalaje_minima' => $d['und_embalaje_minima'] ?? ''
+        ];
+    }
+
+    // === Obtener almacenes (id incluido) ===
+    $almacenes = [];
+    $resAlm = $this->dbh->query("SELECT id, nombre FROM almacenes ORDER BY nombre ASC");
+    while ($a = $resAlm->fetch_assoc()) {
+        $almacenes[] = [
+            'id_almacen' => $a['id'],
+            'nombre' => $a['nombre']
+        ];
+    }
+
+    // === Respuesta final ===
+    echo json_encode([
+        'success' => true,
+        'proveedor' => $info['proveedor'],
+        'fecha' => $info['fecha_oc'],
+        'estado' => $info['estado'],
+        'detalle' => $detalle,
+        'almacenes' => $almacenes
+    ]);
+}
+
+
+	// ===================================================
+	// GUARDAR INGRESO DE ORDEN DE COMPRA
+	// ===================================================
+	function save_ingreso()
+{
+    extract($_POST);
+    $id_oc = mysqli_real_escape_string($this->dbh, $id_oc);
+    $estado = mysqli_real_escape_string($this->dbh, $estado);
+    $detalle = json_decode($detalle, true);
+
+    if (empty($id_oc) || !is_array($detalle)) {
+        echo json_encode(['success' => false, 'message' => 'Datos incompletos.']);
+        return;
+    }
+
+    // === Obtener info de la orden ===
+    $orden = $this->dbh->query("SELECT o.numero_oc, o.proveedor_id, p.nombre_proveedor AS proveedor
+                                FROM orden_compra o
+                                INNER JOIN proveedores p ON p.id = o.proveedor_id
+                                WHERE o.id_oc = '$id_oc' LIMIT 1");
+    $info = $orden->fetch_assoc();
+    $numero_oc = $info['numero_oc'];
+    $proveedor = $info['proveedor_id'];
+
+    // === Generar correlativo de lote base ===
+    $fechaActual = date('dmy');
+    $res = $this->dbh->query("SELECT COUNT(*) AS total FROM movimientos_inventario");
+    $row = $res->fetch_assoc();
+    $correlativo = str_pad($row['total'] + 1, 5, '0', STR_PAD_LEFT);
+    $loteBase = $correlativo . $fechaActual;
+
+    // === Registrar detalle ===
+    foreach ($detalle as $index => $d) {
+        $id_detalle = intval($d['id_detalle']);
+        $cant = floatval($d['cantidad']);
+        $almacen_id = intval($d['almacen_id']); // desde el select del frontend
+        $lote = !empty($d['lote']) ? mysqli_real_escape_string($this->dbh, $d['lote']) : ($loteBase . $index);
+
+        // Actualizar cantidad recibida y lote/almacén
+        $this->dbh->query("UPDATE orden_compra_detalle 
+                           SET cantidad_recibida = '$cant', lote = '$lote', almacen_id = '$almacen_id'
+                           WHERE id_detalle = '$id_detalle'");
+
+        // Obtener datos del producto
+        $prod = $this->dbh->query("SELECT d.producto, p.str_id AS id_interno, p.descripcion, d.precio, p.calibre, p.umb AS umb,p.ref_1,p.ref_2
+                                   FROM orden_compra_detalle d
+                                   INNER JOIN producto p ON p.id_producto = d.producto
+                                   WHERE d.id_detalle = '$id_detalle' LIMIT 1")->fetch_assoc();
+
+        $id_producto = $prod['producto'];
+        $id_interno = $prod['id_interno'];
+        $descripcion = $prod['descripcion'];
+        $precio = $prod['precio'];
+        $calibre = $prod['calibre'];
+        $umb = $prod['umb'];
+        $ref1 = $prod['ref_1'];
+        $ref2 = $prod['ref_2'];
+        $subtotal = $cant * $precio;
+
+        // Insertar movimiento
+        $this->dbh->query("INSERT INTO movimientos_inventario 
+            (id_producto, id_interno, descripcion, cantidad, cliente_proveedor, fecha_movimiento, tipo_movimiento, num_documento, 
+             costo_unitario, costo_total, calibre, umb, lote, almacen_id,ref1,ref2)
+            VALUES ('$id_producto', '$id_interno', '$descripcion', '$cant', '$proveedor', NOW(), 
+                    'Entrada OC', '$numero_oc', '$precio', '$subtotal', '$calibre', '$umb', '$lote', '$almacen_id','$ref1','$ref2')");
+    }
+
+    // === Actualizar estado general ===s
+    $this->dbh->query("UPDATE orden_compra SET estado = '$estado' WHERE id_oc = '$id_oc'");
+
+    echo json_encode(['success' => true, 'message' => 'Ingreso registrado correctamente con lote y almacén.']);
+}
+
+
+	function save_ingreso_manual() {
+    extract($_POST);
+    $detalle = json_decode($_POST['detalle'] ?? '[]', true);
+    $almacen_id = intval($almacen_id ?? 0);
+
+    if (empty($detalle)) {
+        echo json_encode(['success'=>false,'message'=>'No hay productos para registrar.']); 
+        return;
+    }
+
+    if ($almacen_id == 0) {
+        echo json_encode(['success'=>false,'message'=>'Debe seleccionar un almacén.']); 
+        return;
+    }
+
+    $fecha = mysqli_real_escape_string($this->dbh, $fecha);
+    $proveedor = mysqli_real_escape_string($this->dbh, $proveedor);
+    $observacion = mysqli_real_escape_string($this->dbh, $observacion);
+
+    // Crear encabezado de ingreso manual
+    $this->dbh->query("INSERT INTO ingreso_manual (fecha, proveedor_id, observacion, tipo_movimiento)
+                       VALUES ('$fecha','$proveedor','$observacion','ENTRADA MANUAL')");
+    $id_ingreso = $this->dbh->insert_id;
+
+    // Generar lote global correlativo
+    $resLote = $this->dbh->query("SELECT IFNULL(MAX(CAST(SUBSTRING(lote,1,5) AS UNSIGNED)),0)+1 AS correlativo 
+                                  FROM ingreso_manual_detalle");
+    $loteRow = $resLote->fetch_assoc();
+    $correlativo = str_pad($loteRow['correlativo'],5,'0',STR_PAD_LEFT);
+    $fechaLote = date('dmy');
+
+    foreach ($detalle as $d) {
+        $producto = $d['producto'];
+        $cantidad = floatval($d['cantidad']);
+        $loteProd = trim($d['lote']) ?: $correlativo.$fechaLote; // si no hay lote manual, genera automático
+        $costo = floatval($d['costo']);
+        $total = $cantidad * $costo;
+
+        // Insertar detalle
+        $this->dbh->query("INSERT INTO ingreso_manual_detalle 
+            (id_ingreso, producto_id, cantidad, lote, almacen_id, costo_unitario, costo_total)
+            VALUES ('$id_ingreso','$producto','$cantidad','$loteProd','$almacen_id','$costo','$total')");
+
+        // Insertar movimiento
+        $this->dbh->query("INSERT INTO movimientos_inventario 
+            (id_producto, id_interno, descripcion, cantidad, lote, almacen_id, tipo_movimiento, cliente_proveedor, num_documento, costo_unitario, costo_total, fecha_movimiento,calibre, umb,ref1,ref2)
+            SELECT p.id_producto,p.str_id, p.descripcion,'$cantidad','$loteProd','$almacen_id','Entrada manual','$proveedor','$id_ingreso','$costo','$total',NOW(), p.calibre, p.umb,p.ref_1,p.ref_2 
+			FROM producto p  WHERE p.id_producto = '$producto'");
+    }
+
+    echo json_encode(['success'=>true,'message'=>'Ingreso manual registrado correctamente.']);
+}
 }

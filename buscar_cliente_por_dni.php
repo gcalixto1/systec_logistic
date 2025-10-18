@@ -1,15 +1,24 @@
 <?php
-include('conexionfin.php');
+require_once "includes/class.php";  // donde está listarclientes()
 
-$response = ['success' => false];
+// Recibir filtro desde AJAX
+$filtro = isset($_GET['q']) ? $_GET['q'] : '';
 
-if (isset($_GET['dni']) && !empty($_GET['dni'])) {
-    $dni = $conexion->real_escape_string($_GET['dni']);
-    $query = $conexion->query("SELECT * FROM cliente LEFT JOIN cliente_direccion ON cliente_direccion.cliente_dni = cliente.dni WHERE cliente.dni = '$dni'");
+// Crear instancia
+$obj = new Action();
 
-    if ($query && $cliente = $query->fetch_assoc()) {
-        $response = array_merge(['success' => true], $cliente);
-    }
+// Buscar clientes
+$clientes = $obj->listarclientes($filtro);
+
+// Formatear respuesta en JSON para Select2
+$resultado = [];
+foreach ($clientes as $c) {
+    $resultado[] = [
+        "id" => $c['id'], // lo que guardarás en pedidos
+        "text" => $c['id'] . " - " . $c['nit'] . " - " . $c['nombre_cliente']. " - " . $c['nombre_sede'], // lo que el usuario ve
+        "nombre_sede" => $c['nombre_sede'],
+        "plazo_pago" => $c['plazos_pago_dias'],
+    ];
 }
 
-echo json_encode($response);
+echo json_encode(["results" => $resultado]);    

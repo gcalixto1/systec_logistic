@@ -42,7 +42,7 @@ if (!empty($_POST)) {
                     confirmButtonText: "OK"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = "productos.php";
+                        window.location.href = "productos.php"; 
                     }
                 });
             </script>';

@@ -1,22 +1,25 @@
 <?php
-include('conexionfin.php');
+require_once "includes/class.php"; // tu clase Action o similar
 
-$codigo = $_POST['codigo'];
+$filtro = isset($_GET['q']) ? $_GET['q'] : '';
 
-$stmt = $conexion->prepare("SELECT codproducto, descripcion, precio FROM producto WHERE codBarra = ?");
-$stmt->bind_param("s", $codigo);
-$stmt->execute();
-$result = $stmt->get_result();
+$obj = new Action();
+$productos = $obj->listarproductoauto($filtro);
 
-if ($producto = $result->fetch_assoc()) {
-    echo json_encode([
-        "success" => true,
-        "producto" => $producto
-    ]);
-} else {
-    echo json_encode([
-        "success" => false,
-        "message" => "Producto no encontrado"
-    ]);
+$resultado = [];
+foreach ($productos as $p) {
+    $resultado[] = [
+        "id" => $p['id_producto'], 
+        "text" => $p['cod_producto'] . " - " . $p['descripcion'], 
+        "tipo" => $p['tipo'],     // 👈 enviamos el precio unitario
+        "ref1" => $p['ref_1'],     // 👈 enviamos el precio unitario
+        "ref2" => $p['ref_2'],     // 👈 enviamos el precio unitario
+        "relacion" => $p['relacion'],     // 👈 enviamos el precio unitario
+        "precio" => $p['precio_lista_5'],     // 👈 enviamos el precio unitario
+        "precioRemi" => $p['precio_remision_lista_5'],     // 👈 enviamos el precio unitario
+        "unidades" => $p['und_embalaje_minima'],     // 👈 enviamos el precio unitario
+        "calibre" => $p['calibre']      // 👈 si quieres, también la unidad de medida
+    ];
 }
-?>
+
+echo json_encode(["results" => $resultado]);

@@ -7,10 +7,10 @@ if ($_SERVER['HTTP_HOST'] === 'localhost') {
     $bd = "systec_logistic";
 } else {
     // SERVIDOR
-    $host = "controlinterno.net";
-    $user = "contr566_gallos";
+    $host = "localhost";
+    $user = "u424078311_systec";
     $clave = "Elcreador2025*";
-    $bd = "contr566_compliance";
+    $bd = "u424078311_systec_logis";
 }
 
 $conexion = new mysqli($host, $user, $clave, $bd);
