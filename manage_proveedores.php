@@ -47,10 +47,19 @@ $documentos = $pro->ListarDocumentos();
                                 value="<?php echo isset($meta['documento']) ? htmlspecialchars($meta['documento']) : ''; ?>" required>
                         </div>
 
-                        <div class="form-group col-md-12">
+                        <div class="form-group col-md-6">
                             <label for="proveedor">Nombre del Proveedor</label>
                             <input type="text" name="nombre_proveedor" id="nombre_proveedor" class="form-control"
                                 value="<?php echo isset($meta['nombre_proveedor']) ? htmlspecialchars($meta['nombre_proveedor']) : ''; ?>" required>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label for="tipo_id">Tipo Proveedor</label>
+                            <select name="tipo_proveedor" id="tipo_proveedor" class="form-control" required>
+                                <option value="">-- SELECCIONE --</option>
+                                <option value="NACIONAL" <?php echo (isset($meta['tipo_proveedor']) && $meta['tipo_proveedor'] == 'NACIONAL') ? 'selected' : ''; ?>>NACIONAL</option>
+                                <option value="INTERNACIONAL" <?php echo (isset($meta['tipo_proveedor']) && $meta['tipo_proveedor'] == 'INTERNACIONAL') ? 'selected' : ''; ?>>INTERNACIONAL</option>
+                            </select>
                         </div>
 
                         <div class="form-group col-md-12">

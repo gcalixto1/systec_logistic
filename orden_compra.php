@@ -37,19 +37,23 @@ $numeroOC = $row ? str_pad($row['valor'], 6, '0', STR_PAD_LEFT) : '';
         </div>
 
         <!-- AGREGAR PRODUCTO -->
-        <div class="card shadow-sm mb-4">
+        <div class="card">
             <div class="card-body">
                 <h5 class="card-title mb-3">Agregar Producto</h5>
-                <div class="row g-3 align-items-end" id="form-producto">
-                    <div class="col-md-6">
+                <div class="row  align-items-end" id="form-producto">
+                    <div class="col-md-4">
                         <label>Producto</label>
                         <select class="form-control" id="producto" name="producto_id"></select>
                         <input type="hidden" id="descproducto" name="descproducto">
                         <input type="hidden" id="idPR" name="idPR">
                     </div>
                     <div class="col-md-2">
-                        <label>Cantidad</label>
+                        <label>Cantidad (Unidades)</label>
                         <input type="number" class="form-control" id="cantidad" placeholder="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label>Caja / Paca / kg</label>
+                        <input type="number" class="form-control" id="caja" placeholder="0">
                     </div>
                     <div class="col-md-2">
                         <label>Costo Unit.</label>
@@ -59,12 +63,14 @@ $numeroOC = $row ? str_pad($row['valor'], 6, '0', STR_PAD_LEFT) : '';
                         <label>Subtotal</label>
                         <input type="text" class="form-control" id="subtotal" readonly>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-2" hidden>
                         <label>IVA</label>
                         <input type="checkbox" class="form-check-input" id="checkIVAProducto" checked> Aplicar IVA
                     </div>
                     
                 </div>
+                <br>
+                <br>
                 <div class="col-md-2">
                         <button type="button" class="btn btn-primary w-100" id="btnAgregar">➕ Agregar</button>
                     </div>
@@ -80,7 +86,8 @@ $numeroOC = $row ? str_pad($row['valor'], 6, '0', STR_PAD_LEFT) : '';
                         <thead class="table-light">
                             <tr>
                                 <th>Producto</th>
-                                <th>Cantidad</th>
+                                <th>Cantidad(unidades)</th>
+                                <th>Caja / Paca / KG</th>
                                 <th>Costo Unit.</th>
                                 <th>Subtotal</th>
                                 <th>IVA</th>
@@ -145,13 +152,16 @@ $('#producto').on('select2:select', function(e){
     $('#descproducto').val(data.text);
     $('#idPR').val(data.id);
     $('#precio').val(parseFloat(data.precio || 0).toFixed(2));
-    $('#cantidad').val(1);
+    unidadesPorCaja = parseFloat(data.unidades) || 1;
+    $('#caja').val(1);
+    $('#cantidad').val(unidadesPorCaja);
+     $('#caja').val(1);
     calcularSubtotal();
 });
 
 $('#cantidad, #precio').on('keyup change', calcularSubtotal);
 function calcularSubtotal(){
-    let cantidad = parseFloat($('#cantidad').val())||0;
+    let cantidad = parseFloat($('#caja').val())||0;
     let precio = parseFloat($('#precio').val())||0;
     $('#subtotal').val((cantidad*precio).toFixed(2));
 }
@@ -161,20 +171,21 @@ $('#btnAgregar').on('click', ()=>{
     let producto = $('#idPR').val();
     let productod = $('#descproducto').val();
     let cantidad = parseFloat($('#cantidad').val());
+    let caja = parseFloat($('#caja').val());
     let precio = parseFloat($('#precio').val());
-    let subtotal = cantidad * precio;
+    let subtotal = caja * precio;
     let aplicaIVA = $('#checkIVAProducto').is(':checked');
     let iva = aplicaIVA ? subtotal * 0.19 : 0; // 19% IVA (Colombia)
     let total = subtotal + iva;
 
     if(!producto || cantidad<=0) { Swal.fire("Completa los campos del producto"); return; }
 
-    detalle.push({producto,productod, cantidad, precio, subtotal, iva, total});
+    detalle.push({producto,productod, cantidad,caja, precio, subtotal, iva, total});
     renderTabla();
     actualizarTotales();
 
     $('#producto').val(null).trigger('change');
-    $('#cantidad,#precio,#subtotal').val('');
+    $('#cantidad,#caja,#precio,#subtotal').val('');
 });
 
 function renderTabla(){
@@ -184,6 +195,7 @@ function renderTabla(){
         tbody.append(`<tr>
             <td>${f.productod}</td>
             <td>${f.cantidad}</td>
+            <td>${f.caja}</td>
             <td>${f.precio.toFixed(2)}</td>
             <td>${f.subtotal.toFixed(2)}</td>
             <td>${f.iva.toFixed(2)}</td>
@@ -237,5 +249,24 @@ $('#formOC').on('submit', function(e){
             }
         }
     });
+});
+
+$('#cantidad').on('change keyup', function(){
+    let cantidadTotal = parseFloat($(this).val()) || 0;
+    let cajas = cantidadTotal / unidadesPorCaja; // calculo inverso
+    $('#caja').val(cajas.toFixed(2));
+
+    let precio = parseFloat($('#precio').val())||0;
+    $('#subtotal').val((cajas * precio).toFixed(2));
+});
+
+// Cuando cambia caja, actualiza cantidad (por si el usuario cambia cajas directamente)
+$('#caja').on('change keyup', function(){
+    let cajas = parseFloat($(this).val())||0;
+    let cantidadTotal = cajas * unidadesPorCaja; // normal
+    $('#cantidad').val(cantidadTotal);
+
+    let precio = parseFloat($('#precio').val())||0;
+    $('#subtotal').val((cajas * precio).toFixed(2));
 });
 </script>

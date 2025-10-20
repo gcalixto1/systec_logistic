@@ -2,7 +2,8 @@
 require('factura/fpdf/fpdf.php');
 include("conexionfin.php");
 
-class PDF_MC_Table extends FPDF {
+class PDF_MC_Table extends FPDF
+{
 
     function RoundedRect($x, $y, $w, $h, $r = 3, $style = '')
     {
@@ -30,10 +31,15 @@ class PDF_MC_Table extends FPDF {
     function _Arc($x1, $y1, $x2, $y2, $x3, $y3)
     {
         $h = $this->h;
-        $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c',
-            $x1 * $this->k, ($h - $y1) * $this->k,
-            $x2 * $this->k, ($h - $y2) * $this->k,
-            $x3 * $this->k, ($h - $y3) * $this->k));
+        $this->_out(sprintf(
+            '%.2F %.2F %.2F %.2F %.2F %.2F c',
+            $x1 * $this->k,
+            ($h - $y1) * $this->k,
+            $x2 * $this->k,
+            ($h - $y2) * $this->k,
+            $x3 * $this->k,
+            ($h - $y3) * $this->k
+        ));
     }
 
     function NbLines($w, $txt)
@@ -111,14 +117,21 @@ function doc_orden_compra($id_orden, $conexion)
     $pdf->SetFont('Arial', '', 11);
     $pdf->Cell(100, 6, utf8_decode("Proveedor: " . $oc['nombre_proveedor']), 0, 0);
     $pdf->Cell(90, 6, utf8_decode("No. Orden: " . $oc['numero_oc']), 0, 1, 'R');
-    $pdf->Cell(100, 6, utf8_decode("Fecha: " . $oc['fecha_oc']), 0, 1);
+
+    // Formatear las fechas
+    $fechaOC = date('d/m/Y', strtotime($oc['fecha_oc']));
+    $fechaLlegada = date('d/m/Y', strtotime($oc['fecha_llegada']));
+
+    $pdf->Cell(100, 6, utf8_decode("Fecha: " . $fechaOC), 0, 1);
+    $pdf->Cell(100, 6, utf8_decode("Fecha aproximada de llegada: " . $fechaLlegada), 0, 1);
+
     $pdf->Ln(5);
 
     // --- Encabezado tabla ---
     $pdf->SetFont('Arial', 'B', 10);
     $pdf->SetFillColor(230, 230, 230);
-    $pdf->Cell(80, 8, utf8_decode("Descripción"), 1, 0, 'C', true);
-    $pdf->Cell(25, 8, "Cantidad", 1, 0, 'C', true);
+    $pdf->Cell(73, 8, utf8_decode("Descripción"), 1, 0, 'C', true);
+    $pdf->Cell(30, 8, "Cantidad", 1, 0, 'C', true);
     $pdf->Cell(30, 8, "Costo Unitario", 1, 0, 'C', true);
     $pdf->Cell(25, 8, "IVA", 1, 0, 'C', true);
     $pdf->Cell(30, 8, "Total", 1, 1, 'C', true);
@@ -126,14 +139,14 @@ function doc_orden_compra($id_orden, $conexion)
     $pdf->SetFont('Arial', '', 10);
 
     // --- Detalle ---
-    $result = $conexion->query("SELECT do.*,p.descripcion FROM orden_compra_detalle do inner join producto p ON p.id_producto = do.producto WHERE id_oc= '$id_orden'");
+    $result = $conexion->query("SELECT do.*,p.descripcion,p.und_embalaje_minima FROM orden_compra_detalle do inner join producto p ON p.id_producto = do.producto WHERE id_oc= '$id_orden'");
     while ($row = $result->fetch_assoc()) {
 
         $nb = max(
-            $pdf->NbLines(80, utf8_decode($row['descripcion'])),
+            $pdf->NbLines(73, utf8_decode($row['descripcion'])),
             $pdf->NbLines(25, $row['cantidad']),
             $pdf->NbLines(30, number_format($row['precio'], 2)),
-            $pdf->NbLines(25, number_format($row['total'] * 0.13, 2)),
+            $pdf->NbLines(25, number_format($row['iva'], 2)),
             $pdf->NbLines(30, number_format($row['total'], 2))
         );
         $h = 6 * $nb;
@@ -141,15 +154,15 @@ function doc_orden_compra($id_orden, $conexion)
         $y = $pdf->GetY();
 
         // --- Descripción con altura adaptada ---
-        $pdf->MultiCell(80, 6, utf8_decode($row['descripcion']), 0, 'L');
-        $pdf->SetXY($x + 80, $y);
-        $pdf->Cell(25, $h, $row['cantidad'], 1, 0, 'C');
+        $pdf->MultiCell(73, 6, utf8_decode($row['descripcion']), 0, 'L');
+        $pdf->SetXY($x + 73, $y);
+        $pdf->Cell(30, $h, $row['cantidad'].'u' .' / '.$row['cantidad'] /$row['und_embalaje_minima']. 'cjs', 1, 0, 'C');
         $pdf->Cell(30, $h, number_format($row['precio'], 2), 1, 0, 'R');
-        $pdf->Cell(25, $h, number_format($row['total'] * 0.13, 2), 1, 0, 'R');
+        $pdf->Cell(25, $h, number_format($row['iva'], 2), 1, 0, 'R');
         $pdf->Cell(30, $h, number_format($row['total'], 2), 1, 1, 'R');
 
         // --- Borde de la celda de descripción ---
-        $pdf->Rect($x, $y, 80, $h);
+        $pdf->Rect($x, $y, 73, $h);
         $pdf->SetY($y + $h);
     }
 
@@ -157,13 +170,13 @@ function doc_orden_compra($id_orden, $conexion)
 
     // --- Totales alineados a la tabla ---
     $pdf->SetFont('Arial', 'B', 11);
-    $pdf->Cell(125);
+    $pdf->Cell(123);
     $pdf->Cell(35, 8, "Subtotal:", 1, 0, 'R');
     $pdf->Cell(30, 8, number_format($oc['subtotal'], 2), 1, 1, 'R');
-    $pdf->Cell(125);
+    $pdf->Cell(123);
     $pdf->Cell(35, 8, "IVA:", 1, 0, 'R');
     $pdf->Cell(30, 8, number_format($oc['iva'], 2), 1, 1, 'R');
-    $pdf->Cell(125);
+    $pdf->Cell(123);
     $pdf->Cell(35, 8, "Total:", 1, 0, 'R');
     $pdf->Cell(30, 8, number_format($oc['total'], 2), 1, 1, 'R');
 
@@ -183,4 +196,3 @@ function doc_orden_compra($id_orden, $conexion)
 if (isset($_GET['id'])) {
     doc_orden_compra($_GET['id'], $conexion);
 }
-?>

@@ -220,6 +220,11 @@ $relaciones = $pro->Listarrelaciones();
                             <input type="text" step="0.01" name="lead_time" id="lead_time" class="form-control"
                                 value="<?php echo isset($meta['lead_time']) ? $meta['lead_time'] : ''; ?>">
                         </div>
+                        <div class="form-group col-md-4">
+                            <label for="lead_time">Costo standar</label>
+                            <input type="text" step="0.01" name="costo_standar" id="costo_standar" class="form-control"
+                                value="<?php echo isset($meta['costo_standar']) ? $meta['costo_standar'] : ''; ?>">
+                        </div>
                     </div>
                 </div>
             </div>

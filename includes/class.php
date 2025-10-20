@@ -631,6 +631,7 @@ class Action
 		$data .= ", email = '$email'";
 		$data .= ", cupo_credito = '$cupo_credito'";
 		$data .= ", nombre_contacto = '$nombre_contacto'";
+		$data .= ", tipo_proveedor = '$tipo_proveedor'";
 
 		// Inserción o actualización
 		if (empty($id)) {
@@ -724,7 +725,8 @@ class Action
 			'precio_lista_5',
 			'precio_remision_lista_5',
 			'activo',
-			'lead_time'
+			'lead_time',
+			'costo_standar'
 		];
 
 		$data = [];
@@ -1190,7 +1192,7 @@ class Action
 	function movimientos_caja()
 	{
 		extract($_POST);
-		$data = "fecha = NOW()";
+		$data = "C";
 		$data .= ", ingreso = CASE 
                            WHEN '$transaccion' = 'ENTRADA' THEN '$ingreso'
                            WHEN '$transaccion' = 'SALIDA' THEN 0.00
@@ -1565,7 +1567,7 @@ class Action
                                     p.descripcion, 
                                     d.cantidad, 
                                     IFNULL(d.cantidad_recibida, 0) AS cantidad_recibida,
-                                    d.precio, 
+                                    p.costo_standar as precio, 
                                     p.umb, 
                                     p.und_embalaje_minima
                                FROM orden_compra_detalle d
@@ -1642,13 +1644,15 @@ class Action
     // === Registrar detalle ===
     foreach ($detalle as $index => $d) {
         $id_detalle = intval($d['id_detalle']);
-        $cant = floatval($d['cantidad']);
+        $cant = floatval($d['caja']);
+        $uni = floatval($d['cantidad']);
+        $precioN = floatval($d['precio']);
         $almacen_id = intval($d['almacen_id']); // desde el select del frontend
         $lote = !empty($d['lote']) ? mysqli_real_escape_string($this->dbh, $d['lote']) : ($loteBase . $index);
 
         // Actualizar cantidad recibida y lote/almacén
         $this->dbh->query("UPDATE orden_compra_detalle 
-                           SET cantidad_recibida = '$cant', lote = '$lote', almacen_id = '$almacen_id'
+                           SET cantidad_recibida = '$cant', lote = '$lote', almacen_id = '$almacen_id', precio = '$precioN'
                            WHERE id_detalle = '$id_detalle'");
 
         // Obtener datos del producto
@@ -1670,13 +1674,14 @@ class Action
         // Insertar movimiento
         $this->dbh->query("INSERT INTO movimientos_inventario 
             (id_producto, id_interno, descripcion, cantidad, cliente_proveedor, fecha_movimiento, tipo_movimiento, num_documento, 
-             costo_unitario, costo_total, calibre, umb, lote, almacen_id,ref1,ref2)
+             costo_unitario, costo_total, calibre, umb, lote, almacen_id,ref1,ref2,unidades)
             VALUES ('$id_producto', '$id_interno', '$descripcion', '$cant', '$proveedor', NOW(), 
-                    'Entrada OC', '$numero_oc', '$precio', '$subtotal', '$calibre', '$umb', '$lote', '$almacen_id','$ref1','$ref2')");
+                    'Entrada OC', '$numero_oc', '$precio', '$subtotal', '$calibre', '$umb', '$lote', '$almacen_id','$ref1','$ref2','$uni')");
     }
 
     // === Actualizar estado general ===s
     $this->dbh->query("UPDATE orden_compra SET estado = '$estado' WHERE id_oc = '$id_oc'");
+    $this->dbh->query("UPDATE producto SET costo_standar = '$precio' WHERE id_producto = '$id_producto'");
 
     echo json_encode(['success' => true, 'message' => 'Ingreso registrado correctamente con lote y almacén.']);
 }
@@ -1734,4 +1739,22 @@ class Action
 
     echo json_encode(['success'=>true,'message'=>'Ingreso manual registrado correctamente.']);
 }
+// ajax.php?action=get_lotes_producto
+function get_lotes_producto(){
+    extract($_POST);
+    $almacen_id = mysqli_real_escape_string($this->dbh, $almacen_id);
+    $producto_id = mysqli_real_escape_string($this->dbh, $producto_id);
+
+    $q = $this->dbh->query("SELECT lote, SUM(cantidad) as cantidad 
+                             FROM movimientos_inventario 
+                             WHERE producto_id='$producto_id' AND almacen_id='$almacen_id' 
+                             GROUP BY lote HAVING cantidad>0");
+
+    $lotes = [];
+    while($r = $q->fetch_assoc()){
+        $lotes[] = ['lote'=>$r['lote'],'cantidad'=>$r['cantidad']];
+    }
+    echo json_encode(['success'=>true,'lotes'=>$lotes]);
+}
+
 }

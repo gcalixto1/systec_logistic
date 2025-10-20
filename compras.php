@@ -43,7 +43,7 @@
             <table class="table table-bordered table-sm" id="detalleOrden">
                 <thead class="table-light">
                     <tr>
-                        <th>ID Producto</th>
+                        <th>ID</th>
                         <th>Descripción</th>
                         <th>Cant. OC</th>
                         <th>Cant. Pendiente</th>
@@ -64,109 +64,172 @@
 </div>
 
 <script>
-    
-$(document).ready(function(){
+    $(document).ready(function() {
 
-    // === Cargar datos al seleccionar orden ===
-    $('#ordenSelect').change(function(){
-        let id_oc = $(this).val();
-        if(id_oc == ""){ $('#datosOrden').hide(); return; }
+        // === Cargar datos al seleccionar orden ===
+        $('#ordenSelect').change(function() {
+            let id_oc = $(this).val();
+            if (id_oc == "") {
+                $('#datosOrden').hide();
+                return;
+            }
 
-        $.ajax({
-            url:'ajax.php?action=get_orden',
-            type:'POST',
-            data:{id_oc:id_oc},
-            dataType:'json',
-            success:function(res){
-                if(res.success){
-                    $('#datosOrden').show();
-                    $('#proveedor').val(res.proveedor);
-                    $('#fecha').val(res.fecha);
-                    $('#estado').val(res.estado);
+            $.ajax({
+                url: 'ajax.php?action=get_orden',
+                type: 'POST',
+                data: { id_oc: id_oc },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.success) {
+                        $('#datosOrden').show();
+                        $('#proveedor').val(res.proveedor);
+                        $('#fecha').val(res.fecha);
+                        $('#estado').val(res.estado);
 
-                    let rows = '';
-                    res.detalle.forEach(d=>{
-                        let pendiente = d.cantidad - (d.cantidad_recibida ?? 0);
-                        let correlativo = ('00000' + d.id_detalle).slice(-5);
-                        let fecha = new Date();
-                        let fechaStr = String(fecha.getDate()).padStart(2, '0') +
-                                       String(fecha.getMonth() + 1).padStart(2, '0') +
-                                       String(fecha.getFullYear()).slice(-2);
-                        let loteAuto = correlativo + fechaStr;
+                        let rows = '';
+                        res.detalle.forEach((d, i) => {
+                            const pendiente = d.cantidad - d.cantidad_recibida;
+                            const unidadesPorCaja = parseFloat(d.und_embalaje_minima) || 1;
+                            const cantidadCajas = (d.cantidad / unidadesPorCaja).toFixed(2);
+                            const pendienteCajas = (pendiente / unidadesPorCaja).toFixed(2);
 
-                        let almacenes = '';
-                        res.almacenes.forEach(a=>{
-                            almacenes += `<option value="${a.id_almacen}">${a.nombre}</option>`;
+                            // Lote autogenerado
+                            const correlativo = ('00000' + d.id_detalle).slice(-5);
+                            const fecha = new Date();
+                            const fechaStr = String(fecha.getDate()).padStart(2, '0') +
+                                String(fecha.getMonth() + 1).padStart(2, '0') +
+                                String(fecha.getFullYear()).slice(-2);
+                            const loteAuto = correlativo + fechaStr;
+
+                            // Opciones de almacén
+                            let almacenes = '';
+                            res.almacenes.forEach(a => {
+                                almacenes += `<option value="${a.id_almacen}">${a.nombre}</option>`;
+                            });
+
+                            rows += `<tr>
+                                <td>${d.producto}</td>
+                                <td>${d.descripcion}</td>
+
+                                <!-- Cantidad OC -->
+                                <td>
+                                    ${d.cantidad.toFixed(2)} <br><small class="text-muted">(${cantidadCajas} cjs)</small>
+                                </td>
+
+                                <!-- Cantidad Pendiente -->
+                                <td>
+                                    ${pendiente.toFixed(2)}
+                                    <br><small class="text-muted">(${pendienteCajas} cjs)</small>
+                                </td>
+
+                                <!-- Cantidad a Ingresar -->
+                                <td>
+                                    <div class="input-group input-group">
+                                        <input type="number" class="form-control cant-unidades" 
+                                            min="0" max="${pendiente}" value="0" 
+                                            placeholder="Unidades"
+                                            data-id="${d.id_detalle}" 
+                                            data-idprod="${d.producto}"
+                                            data-precio="${d.precio}"
+                                            data-upcaja="${unidadesPorCaja}">
+                                        <span class="input-group-text">u</span>
+                                        <input type="number" class="form-control cant-cajas" 
+                                            min="0" step="0.01" value="0"
+                                            placeholder="Cajas">
+                                        <span class="input-group-text">cjs</span>
+                                    </div>
+                                </td>
+
+                                <td><select class="form-control form-control almacen">${almacenes}</select></td>
+                                <td><input type="text" class="form-control form-control-sm lote" value="${loteAuto}"></td>
+                                <td><input type="number" class="form-control form-control-sm cant-precio"
+                                    min="0" value="${parseFloat(d.precio).toFixed(2)}"></td>
+                                <td class="total">0.00</td>
+                            </tr>`;
                         });
 
-                        rows += `<tr>
-                            <td>${d.producto}</td>
-                            <td>${d.descripcion}</td>
-                            <td>${d.cantidad}</td>
-                            <td>${pendiente}</td>
-                            <td><input type="number" class="form-control form-control-sm cant-ingreso"
-                                min="0" max="${pendiente}" value="0"
-                                data-id="${d.id_detalle}" data-precio="${d.precio}" data-idprod="${d.producto}">
-                            </td>
-                            <td><select class="form-control form-control-sm almacen">${almacenes}</select></td>
-                            <td><input type="text" class="form-control form-control-sm lote" value="${loteAuto}"></td>
-                            <td>${parseFloat(d.precio).toFixed(2)}</td>
-                            <td class="total">0.00</td>
-                        </tr>`;
-                    });
+                        $('#detalleOrden tbody').html(rows);
 
-                    $('#detalleOrden tbody').html(rows);
+                        // === Sincronizar unidades ↔ cajas ===
+                        $('#detalleOrden').on('input', '.cant-unidades', function() {
+                            const row = $(this).closest('tr');
+                            const unidades = parseFloat($(this).val()) || 0;
+                            const upCaja = parseFloat($(this).data('upcaja')) || 1;
+                            const cajas = unidades / upCaja;
+                            row.find('.cant-cajas').val(cajas.toFixed(2));
+                            actualizarTotal(row);
+                        });
 
-                    $('.cant-ingreso').on('input', function(){
-                        let cant = parseFloat($(this).val()) || 0;
-                        let precio = parseFloat($(this).data('precio')) || 0;
-                        let total = cant * precio;
-                        $(this).closest('tr').find('.total').text(total.toFixed(2));
-                    });
+                        $('#detalleOrden').on('input', '.cant-cajas', function() {
+                            const row = $(this).closest('tr');
+                            const cajas = parseFloat($(this).val()) || 0;
+                            const upCaja = parseFloat(row.find('.cant-unidades').data('upcaja')) || 1;
+                            const unidades = cajas * upCaja;
+                            row.find('.cant-unidades').val(unidades.toFixed(2));
+                            actualizarTotal(row);
+                        });
 
-                } else {
-                    Swal.fire('Aviso', res.message, 'warning');
+                        $('#detalleOrden').on('input', '.cant-precio', function() {
+                            const row = $(this).closest('tr');
+                            actualizarTotal(row);
+                        });
+
+                        function actualizarTotal(row) {
+                            const unidades = parseFloat(row.find('.cant-cajas').val()) || 0;
+                            const precio = parseFloat(row.find('.cant-precio').val()) || 0;
+                            const total = unidades * precio;
+                            row.find('.total').text(total.toFixed(2));
+                        }
+
+                    } else {
+                        Swal.fire('Aviso', res.message, 'warning');
+                    }
                 }
-            }
+            });
         });
+
+        // === Guardar ingreso ===
+        $('#btnGuardar').click(function() {
+            let id_oc = $('#ordenSelect').val();
+            let estado = $('#estado').val();
+            let detalle = [];
+
+            $('#detalleOrden tbody tr').each(function() {
+                let unidades = parseFloat($(this).find('.cant-unidades').val());
+                let cajas = parseFloat($(this).find('.cant-cajas').val());
+                if (unidades > 0) {
+                    detalle.push({
+                        id_detalle: $(this).find('.cant-unidades').data('id'),
+                        id_producto: $(this).find('.cant-unidades').data('idprod'),
+                        cantidad: unidades,
+                        caja: cajas,
+                        precio: $(this).find('.cant-precio').val(),
+                        almacen_id: $(this).find('.almacen').val(),
+                        lote: $(this).find('.lote').val()
+                    });
+                }
+            });
+
+            if (detalle.length == 0) {
+                Swal.fire('Aviso', 'Debe ingresar al menos una cantidad.', 'warning');
+                return;
+            }
+
+            $.ajax({
+                url: 'ajax.php?action=save_ingreso',
+                type: 'POST',
+                data: {
+                    id_oc: id_oc,
+                    estado: estado,
+                    detalle: JSON.stringify(detalle)
+                },
+                dataType: 'json',
+                success: function(res) {
+                    Swal.fire('Resultado', res.message, res.success ? 'success' : 'error');
+                    if (res.success) setTimeout(() => location.reload(), 1500);
+                }
+            });
+        });
+
     });
-
-    // === Guardar ingreso ===
-    $('#btnGuardar').click(function(){
-        let id_oc = $('#ordenSelect').val();
-        let estado = $('#estado').val();
-        let detalle = [];
-
-        $('#detalleOrden tbody tr').each(function(){
-            let cant = parseFloat($(this).find('.cant-ingreso').val());
-            if(cant > 0){
-                detalle.push({
-                    id_detalle: $(this).find('.cant-ingreso').data('id'),
-                    id_producto: $(this).find('.cant-ingreso').data('idprod'),
-                    cantidad: cant,
-                    precio: $(this).find('.cant-ingreso').data('precio'),
-                    almacen_id: $(this).find('.almacen').val(),
-                    lote: $(this).find('.lote').val()
-                });
-            }
-        });
-
-        if(detalle.length == 0){ 
-            Swal.fire('Aviso', 'Debe ingresar al menos una cantidad.', 'warning');
-            return; 
-        }
-
-        $.ajax({
-            url:'ajax.php?action=save_ingreso',
-            type:'POST',
-            data:{id_oc:id_oc, estado:estado, detalle:JSON.stringify(detalle)},
-            dataType:'json',
-            success:function(res){
-                Swal.fire('Resultado', res.message, res.success ? 'success' : 'error');
-                if(res.success) setTimeout(()=>location.reload(), 1500);
-            }
-        });
-    });
-
-});
 </script>
