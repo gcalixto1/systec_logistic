@@ -368,9 +368,32 @@ if ($action == 'save_ingreso_manual') {
 		echo $save;
 }
 if ($action == 'get_lotes_producto') {
-	$save = $crud->get_lotes_producto();
-	if ($save)
-		echo $save;
+    include("conexionfin.php");
+
+    $producto_id = intval($_POST['producto_id']);
+    $almacen_id = intval($_POST['almacen_id']);
+
+    $sql = "
+        SELECT lote
+        FROM movimientos_inventario
+        WHERE producto_id = $producto_id
+          AND almacen_id = $almacen_id
+        GROUP BY lote
+        SUM(CASE WHEN tipo_movimiento like '%ENTRADA%' THEN cantidad ELSE -cantidad END) AS cantidad
+        ORDER BY lote ASC
+    ";
+
+    $res = $conexion->query($sql);
+    $lotes = [];
+    while ($r = $res->fetch_assoc()) {
+        $lotes[] = [
+            'lote' => $r['lote']
+        ];
+    }
+
+    echo json_encode(['success' => true, 'lotes' => $lotes]);
+    exit;
 }
+
 
 #endregion

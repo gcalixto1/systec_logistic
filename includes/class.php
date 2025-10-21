@@ -1541,26 +1541,26 @@ class Action
 		echo json_encode(['success' => false, 'message' => 'Acción inválida']);
 	}
 	function get_orden()
-{
-    extract($_POST);
-    $id_oc = mysqli_real_escape_string($this->dbh, $id_oc);
+	{
+		extract($_POST);
+		$id_oc = mysqli_real_escape_string($this->dbh, $id_oc);
 
-    // === Obtener datos de la orden ===
-    $orden = $this->dbh->query("SELECT o.numero_oc, o.fecha_oc, o.estado, p.nombre_proveedor AS proveedor
+		// === Obtener datos de la orden ===
+		$orden = $this->dbh->query("SELECT o.numero_oc, o.fecha_oc, o.estado, p.nombre_proveedor AS proveedor
                                 FROM orden_compra o
                                 INNER JOIN proveedores p ON p.id = o.proveedor_id
                                 WHERE o.id_oc = '$id_oc' LIMIT 1");
 
-    if (!$orden || $orden->num_rows == 0) {
-        echo json_encode(['success' => false, 'message' => 'Orden no encontrada.']);
-        return;
-    }
+		if (!$orden || $orden->num_rows == 0) {
+			echo json_encode(['success' => false, 'message' => 'Orden no encontrada.']);
+			return;
+		}
 
-    $info = $orden->fetch_assoc();
+		$info = $orden->fetch_assoc();
 
-    // === Obtener detalle ===
-    $detalle = [];
-    $qdet = $this->dbh->query("SELECT 
+		// === Obtener detalle ===
+		$detalle = [];
+		$qdet = $this->dbh->query("SELECT 
                                     d.id_detalle, 
                                     d.producto, 
                                     p.str_id AS id_interno, 
@@ -1574,187 +1574,304 @@ class Action
                                INNER JOIN producto p ON p.id_producto = d.producto
                                WHERE d.id_oc = '$id_oc'");
 
-    while ($d = $qdet->fetch_assoc()) {
-        $detalle[] = [
-            'id_detalle' => $d['id_detalle'],
-            'producto' => $d['producto'],
-            'id_interno' => $d['id_interno'],
-            'descripcion' => $d['descripcion'],
-            'cantidad' => floatval($d['cantidad']),
-            'cantidad_recibida' => floatval($d['cantidad_recibida']),
-            'precio' => floatval($d['precio']),
-            'umb' => $d['umb'] ?? '',
-            'und_embalaje_minima' => $d['und_embalaje_minima'] ?? ''
-        ];
-    }
+		while ($d = $qdet->fetch_assoc()) {
+			$detalle[] = [
+				'id_detalle' => $d['id_detalle'],
+				'producto' => $d['producto'],
+				'id_interno' => $d['id_interno'],
+				'descripcion' => $d['descripcion'],
+				'cantidad' => floatval($d['cantidad']),
+				'cantidad_recibida' => floatval($d['cantidad_recibida']),
+				'precio' => floatval($d['precio']),
+				'umb' => $d['umb'] ?? '',
+				'und_embalaje_minima' => $d['und_embalaje_minima'] ?? ''
+			];
+		}
 
-    // === Obtener almacenes (id incluido) ===
-    $almacenes = [];
-    $resAlm = $this->dbh->query("SELECT id, nombre FROM almacenes ORDER BY nombre ASC");
-    while ($a = $resAlm->fetch_assoc()) {
-        $almacenes[] = [
-            'id_almacen' => $a['id'],
-            'nombre' => $a['nombre']
-        ];
-    }
+		// === Obtener almacenes (id incluido) ===
+		$almacenes = [];
+		$resAlm = $this->dbh->query("SELECT id, nombre FROM almacenes ORDER BY nombre ASC");
+		while ($a = $resAlm->fetch_assoc()) {
+			$almacenes[] = [
+				'id_almacen' => $a['id'],
+				'nombre' => $a['nombre']
+			];
+		}
 
-    // === Respuesta final ===
-    echo json_encode([
-        'success' => true,
-        'proveedor' => $info['proveedor'],
-        'fecha' => $info['fecha_oc'],
-        'estado' => $info['estado'],
-        'detalle' => $detalle,
-        'almacenes' => $almacenes
-    ]);
-}
+		// === Respuesta final ===
+		echo json_encode([
+			'success' => true,
+			'proveedor' => $info['proveedor'],
+			'fecha' => $info['fecha_oc'],
+			'estado' => $info['estado'],
+			'detalle' => $detalle,
+			'almacenes' => $almacenes
+		]);
+	}
 
 
 	// ===================================================
 	// GUARDAR INGRESO DE ORDEN DE COMPRA
 	// ===================================================
 	function save_ingreso()
-{
-    extract($_POST);
-    $id_oc = mysqli_real_escape_string($this->dbh, $id_oc);
-    $estado = mysqli_real_escape_string($this->dbh, $estado);
-    $detalle = json_decode($detalle, true);
+	{
+		extract($_POST);
+		$id_oc = mysqli_real_escape_string($this->dbh, $id_oc);
+		$estado = mysqli_real_escape_string($this->dbh, $estado);
+		$detalle = json_decode($detalle, true);
 
-    if (empty($id_oc) || !is_array($detalle)) {
-        echo json_encode(['success' => false, 'message' => 'Datos incompletos.']);
-        return;
-    }
+		if (empty($id_oc) || !is_array($detalle)) {
+			echo json_encode(['success' => false, 'message' => 'Datos incompletos.']);
+			return;
+		}
 
-    // === Obtener info de la orden ===
-    $orden = $this->dbh->query("SELECT o.numero_oc, o.proveedor_id, p.nombre_proveedor AS proveedor
+		// === Obtener info de la orden ===
+		$orden = $this->dbh->query("SELECT o.numero_oc, o.proveedor_id, p.nombre_proveedor AS proveedor
                                 FROM orden_compra o
                                 INNER JOIN proveedores p ON p.id = o.proveedor_id
                                 WHERE o.id_oc = '$id_oc' LIMIT 1");
-    $info = $orden->fetch_assoc();
-    $numero_oc = $info['numero_oc'];
-    $proveedor = $info['proveedor_id'];
+		$info = $orden->fetch_assoc();
+		$numero_oc = $info['numero_oc'];
+		$proveedor = $info['proveedor_id'];
 
-    // === Generar correlativo de lote base ===
-    $fechaActual = date('dmy');
-    $res = $this->dbh->query("SELECT COUNT(*) AS total FROM movimientos_inventario");
-    $row = $res->fetch_assoc();
-    $correlativo = str_pad($row['total'] + 1, 5, '0', STR_PAD_LEFT);
-    $loteBase = $correlativo . $fechaActual;
+		// === Generar correlativo de lote base ===
+		$fechaActual = date('dmy');
+		$res = $this->dbh->query("SELECT COUNT(*) AS total FROM movimientos_inventario");
+		$row = $res->fetch_assoc();
+		$correlativo = str_pad($row['total'] + 1, 5, '0', STR_PAD_LEFT);
+		$loteBase = $correlativo . $fechaActual;
 
-    // === Registrar detalle ===
-    foreach ($detalle as $index => $d) {
-        $id_detalle = intval($d['id_detalle']);
-        $cant = floatval($d['caja']);
-        $uni = floatval($d['cantidad']);
-        $precioN = floatval($d['precio']);
-        $almacen_id = intval($d['almacen_id']); // desde el select del frontend
-        $lote = !empty($d['lote']) ? mysqli_real_escape_string($this->dbh, $d['lote']) : ($loteBase . $index);
+		// 🚀 Iniciar transacción
+		$this->dbh->begin_transaction();
 
-        // Actualizar cantidad recibida y lote/almacén
-        $this->dbh->query("UPDATE orden_compra_detalle 
-                           SET cantidad_recibida = '$cant', lote = '$lote', almacen_id = '$almacen_id', precio = '$precioN'
-                           WHERE id_detalle = '$id_detalle'");
+		try {
+			foreach ($detalle as $index => $d) {
+				$id_detalle = intval($d['id_detalle']);
+				$cant = floatval($d['caja']);
+				$uni = floatval($d['cantidad']);
+				$precioN = floatval($d['precio']);
+				$almacen_id = intval($d['almacen_id']);
+				$lote = !empty($d['lote']) ? mysqli_real_escape_string($this->dbh, $d['lote']) : ($loteBase . $index);
 
-        // Obtener datos del producto
-        $prod = $this->dbh->query("SELECT d.producto, p.str_id AS id_interno, p.descripcion, d.precio, p.calibre, p.umb AS umb,p.ref_1,p.ref_2
-                                   FROM orden_compra_detalle d
-                                   INNER JOIN producto p ON p.id_producto = d.producto
-                                   WHERE d.id_detalle = '$id_detalle' LIMIT 1")->fetch_assoc();
+				// === Actualizar detalle OC ===
+				$this->dbh->query("UPDATE orden_compra_detalle 
+                               SET cantidad_recibida = '$cant', lote = '$lote', almacen_id = '$almacen_id', precio = '$precioN'
+                               WHERE id_detalle = '$id_detalle'");
 
-        $id_producto = $prod['producto'];
-        $id_interno = $prod['id_interno'];
-        $descripcion = $prod['descripcion'];
-        $precio = $prod['precio'];
-        $calibre = $prod['calibre'];
-        $umb = $prod['umb'];
-        $ref1 = $prod['ref_1'];
-        $ref2 = $prod['ref_2'];
-        $subtotal = $cant * $precio;
+				// === Obtener datos del producto ===
+				$prod = $this->dbh->query("SELECT d.producto, p.str_id AS id_interno, p.descripcion, d.precio, 
+                                              p.calibre, p.umb AS umb, p.ref_1, p.ref_2, 
+                                              COALESCE(p.und_embalaje_minima,1) AS und_embalaje_minima
+                                       FROM orden_compra_detalle d
+                                       INNER JOIN producto p ON p.id_producto = d.producto
+                                       WHERE d.id_detalle = '$id_detalle' LIMIT 1")->fetch_assoc();
 
-        // Insertar movimiento
-        $this->dbh->query("INSERT INTO movimientos_inventario 
-            (id_producto, id_interno, descripcion, cantidad, cliente_proveedor, fecha_movimiento, tipo_movimiento, num_documento, 
-             costo_unitario, costo_total, calibre, umb, lote, almacen_id,ref1,ref2,unidades)
-            VALUES ('$id_producto', '$id_interno', '$descripcion', '$cant', '$proveedor', NOW(), 
-                    'Entrada OC', '$numero_oc', '$precio', '$subtotal', '$calibre', '$umb', '$lote', '$almacen_id','$ref1','$ref2','$uni')");
-    }
+				$id_producto = $prod['producto'];
+				$id_interno = $prod['id_interno'];
+				$descripcion = $prod['descripcion'];
+				$precio = $prod['precio'];
+				$calibre = $prod['calibre'];
+				$umb = $prod['umb'];
+				$ref1 = $prod['ref_1'];
+				$ref2 = $prod['ref_2'];
+				$factor = $prod['und_embalaje_minima'];
+				$subtotal = $cant * $precio;
 
-    // === Actualizar estado general ===s
-    $this->dbh->query("UPDATE orden_compra SET estado = '$estado' WHERE id_oc = '$id_oc'");
-    $this->dbh->query("UPDATE producto SET costo_standar = '$precio' WHERE id_producto = '$id_producto'");
+				// === Insertar movimiento de entrada ===
+				$this->dbh->query("INSERT INTO movimientos_inventario 
+                (id_producto, id_interno, descripcion, cantidad, cliente_proveedor, fecha_movimiento, tipo_movimiento, num_documento, 
+                 costo_unitario, costo_total, calibre, umb, lote, almacen_id, ref1, ref2, unidades)
+                VALUES ('$id_producto', '$id_interno', '$descripcion', '$cant', '$proveedor', NOW(), 
+                        'Entrada OC', '$numero_oc', '$precio', '$subtotal', '$calibre', '$umb', '$lote', '$almacen_id', '$ref1', '$ref2', '$uni')");
 
-    echo json_encode(['success' => true, 'message' => 'Ingreso registrado correctamente con lote y almacén.']);
-}
+				// === Actualizar o insertar en inventario ===
+				$check = $this->dbh->query("
+                SELECT id_inventario FROM inventario 
+                WHERE producto_id = '$id_producto' 
+                  AND almacen_id = '$almacen_id' 
+                  AND lote = '$lote'
+            ");
+
+				if ($check->num_rows > 0) {
+					// ✅ Ya existe → actualizar stock sumando
+					$this->dbh->query("
+                    UPDATE inventario i
+                    JOIN producto p ON p.id_producto = i.producto_id
+                    SET 
+                        i.stock_unidades_kg = i.stock_unidades_kg + ($factor * $cant),
+                        i.stock_caja_paca_bobinas = i.stock_caja_paca_bobinas + $cant,
+                        i.costo_unitario = '$precioN',
+                        i.fecha_actualizacion = NOW()
+                    WHERE i.producto_id = '$id_producto'
+                      AND i.almacen_id = '$almacen_id'
+                      AND i.lote = '$lote'
+                ");
+				} else {
+					// ➕ No existe → insertar nuevo registro
+					$this->dbh->query("
+                    INSERT INTO inventario (producto_id, almacen_id, lote, stock_unidades_kg, stock_caja_paca_bobinas, costo_unitario)
+                    VALUES ('$id_producto', '$almacen_id', '$lote', ($factor * $cant), '$cant', '$precioN')
+                ");
+				}
+
+				// === Actualizar costo estándar del producto ===
+				$this->dbh->query("UPDATE producto SET costo_standar = '$precioN' WHERE id_producto = '$id_producto'");
+			}
+
+			// === Actualizar estado general de la OC ===
+			$this->dbh->query("UPDATE orden_compra SET estado = '$estado' WHERE id_oc = '$id_oc'");
+
+			// 💾 Confirmar transacción
+			$this->dbh->commit();
+
+			echo json_encode(['success' => true, 'message' => '✅ Ingreso por orden de compra registrado correctamente.']);
+		} catch (Exception $e) {
+			$this->dbh->rollback();
+			echo json_encode(['success' => false, 'message' => '❌ Error al registrar ingreso: ' . $e->getMessage()]);
+		}
+	}
 
 
-	function save_ingreso_manual() {
-    extract($_POST);
-    $detalle = json_decode($_POST['detalle'] ?? '[]', true);
-    $almacen_id = intval($almacen_id ?? 0);
 
-    if (empty($detalle)) {
-        echo json_encode(['success'=>false,'message'=>'No hay productos para registrar.']); 
-        return;
-    }
+	function save_ingreso_manual()
+	{
+		extract($_POST);
+		$detalle = json_decode($_POST['detalle'] ?? '[]', true);
+		$almacen_id = intval($almacen_id ?? 0);
 
-    if ($almacen_id == 0) {
-        echo json_encode(['success'=>false,'message'=>'Debe seleccionar un almacén.']); 
-        return;
-    }
+		if (empty($detalle)) {
+			echo json_encode(['success' => false, 'message' => 'No hay productos para registrar.']);
+			return;
+		}
 
-    $fecha = mysqli_real_escape_string($this->dbh, $fecha);
-    $proveedor = mysqli_real_escape_string($this->dbh, $proveedor);
-    $observacion = mysqli_real_escape_string($this->dbh, $observacion);
+		if ($almacen_id == 0) {
+			echo json_encode(['success' => false, 'message' => 'Debe seleccionar un almacén.']);
+			return;
+		}
 
-    // Crear encabezado de ingreso manual
-    $this->dbh->query("INSERT INTO ingreso_manual (fecha, proveedor_id, observacion, tipo_movimiento)
-                       VALUES ('$fecha','$proveedor','$observacion','ENTRADA MANUAL')");
-    $id_ingreso = $this->dbh->insert_id;
+		$fecha = mysqli_real_escape_string($this->dbh, $fecha);
+		$proveedor = mysqli_real_escape_string($this->dbh, $proveedor);
+		$observacion = mysqli_real_escape_string($this->dbh, $observacion);
 
-    // Generar lote global correlativo
-    $resLote = $this->dbh->query("SELECT IFNULL(MAX(CAST(SUBSTRING(lote,1,5) AS UNSIGNED)),0)+1 AS correlativo 
-                                  FROM ingreso_manual_detalle");
-    $loteRow = $resLote->fetch_assoc();
-    $correlativo = str_pad($loteRow['correlativo'],5,'0',STR_PAD_LEFT);
-    $fechaLote = date('dmy');
+		// 🔒 Iniciar transacción
+		$this->dbh->begin_transaction();
 
-    foreach ($detalle as $d) {
-        $producto = $d['producto'];
-        $cantidad = floatval($d['cantidad']);
-        $loteProd = trim($d['lote']) ?: $correlativo.$fechaLote; // si no hay lote manual, genera automático
-        $costo = floatval($d['costo']);
-        $total = $cantidad * $costo;
+		try {
+			// Crear encabezado de ingreso manual
+			$this->dbh->query("INSERT INTO ingreso_manual (fecha, proveedor_id, observacion, tipo_movimiento)
+                           VALUES ('$fecha','$proveedor','$observacion','ENTRADA MANUAL')");
+			$id_ingreso = $this->dbh->insert_id;
 
-        // Insertar detalle
-        $this->dbh->query("INSERT INTO ingreso_manual_detalle 
-            (id_ingreso, producto_id, cantidad, lote, almacen_id, costo_unitario, costo_total)
-            VALUES ('$id_ingreso','$producto','$cantidad','$loteProd','$almacen_id','$costo','$total')");
+			// Generar lote global correlativo
+			$resLote = $this->dbh->query("SELECT IFNULL(MAX(CAST(SUBSTRING(lote,1,5) AS UNSIGNED)),0)+1 AS correlativo 
+                                      FROM ingreso_manual_detalle");
+			$loteRow = $resLote->fetch_assoc();
+			$correlativo = str_pad($loteRow['correlativo'], 5, '0', STR_PAD_LEFT);
+			$fechaLote = date('dmy');
 
-        // Insertar movimiento
-        $this->dbh->query("INSERT INTO movimientos_inventario 
-            (id_producto, id_interno, descripcion, cantidad, lote, almacen_id, tipo_movimiento, cliente_proveedor, num_documento, costo_unitario, costo_total, fecha_movimiento,calibre, umb,ref1,ref2)
-            SELECT p.id_producto,p.str_id, p.descripcion,'$cantidad','$loteProd','$almacen_id','Entrada manual','$proveedor','$id_ingreso','$costo','$total',NOW(), p.calibre, p.umb,p.ref_1,p.ref_2 
-			FROM producto p  WHERE p.id_producto = '$producto'");
-    }
+			foreach ($detalle as $d) {
+				$producto = intval($d['producto']);
+				$cantidad = floatval($d['cantidad']);
+				$loteProd = trim($d['lote']) ?: $correlativo . $fechaLote; // si no hay lote manual, genera automático
+				$costo = floatval($d['costo']);
+				$total = $cantidad * $costo;
 
-    echo json_encode(['success'=>true,'message'=>'Ingreso manual registrado correctamente.']);
-}
-// ajax.php?action=get_lotes_producto
-function get_lotes_producto(){
-    extract($_POST);
-    $almacen_id = mysqli_real_escape_string($this->dbh, $almacen_id);
-    $producto_id = mysqli_real_escape_string($this->dbh, $producto_id);
+				// Insertar detalle
+				$this->dbh->query("INSERT INTO ingreso_manual_detalle 
+                (id_ingreso, producto_id, cantidad, lote, almacen_id, costo_unitario, costo_total)
+                VALUES ('$id_ingreso','$producto','$cantidad','$loteProd','$almacen_id','$costo','$total')");
 
-    $q = $this->dbh->query("SELECT lote, SUM(cantidad) as cantidad 
+				// 📦 Verificar si ya existe el producto + almacen + lote en inventario
+				$check = $this->dbh->query("
+                SELECT id_inventario FROM inventario 
+                WHERE producto_id = '$producto' 
+                  AND almacen_id = '$almacen_id' 
+                  AND lote = '$loteProd'
+            ");
+
+				if ($check->num_rows > 0) {
+					// ✅ Ya existe → actualizar stock sumando
+					$this->dbh->query("
+                    UPDATE inventario i
+                    JOIN producto p ON p.id_producto = i.producto_id
+                    SET 
+                        i.stock_unidades_kg = i.stock_unidades_kg + (COALESCE(p.und_embalaje_minima,1) * $cantidad),
+                        i.stock_caja_paca_bobinas = i.stock_caja_paca_bobinas + $cantidad,
+                        i.costo_unitario = '$costo',
+                        i.fecha_actualizacion = NOW()
+                    WHERE i.producto_id = '$producto'
+                      AND i.almacen_id = '$almacen_id'
+                      AND i.lote = '$loteProd'
+                ");
+				} else {
+					// ➕ No existe → insertar nuevo registro en inventario
+					$this->dbh->query("
+                    INSERT INTO inventario (producto_id, almacen_id, lote, stock_unidades_kg, stock_caja_paca_bobinas, costo_unitario)
+                    SELECT 
+                        p.id_producto,
+                        '$almacen_id',
+                        '$loteProd',
+                        (COALESCE(p.und_embalaje_minima,1) * $cantidad),
+                        '$cantidad',
+                        '$costo'
+                    FROM producto p
+                    WHERE p.id_producto = '$producto'
+                ");
+				}
+
+				// 📜 Insertar movimiento de inventario
+				$this->dbh->query("
+                INSERT INTO movimientos_inventario 
+                    (id_producto, id_interno, descripcion, cantidad, lote, almacen_id, tipo_movimiento, cliente_proveedor, num_documento, costo_unitario, costo_total, fecha_movimiento, calibre, umb, ref1, ref2,unidades)
+                SELECT 
+                    p.id_producto, 
+                    p.str_id, 
+                    p.descripcion, 
+                    '$cantidad', 
+                    '$loteProd', 
+                    '$almacen_id', 
+                    'Entrada manual', 
+                    '$proveedor', 
+                    '$id_ingreso', 
+                    '$costo', 
+                    '$total', 
+                    NOW(), 
+                    p.calibre, 
+                    p.umb, 
+                    p.ref_1, 
+                    p.ref_2,
+					(COALESCE(p.und_embalaje_minima,1) * $cantidad)
+                FROM producto p  
+                WHERE p.id_producto = '$producto'
+            ");
+			}
+
+			// 💾 Confirmar transacción
+			$this->dbh->commit();
+
+			echo json_encode(['success' => true, 'message' => '✅ Ingreso manual registrado correctamente.']);
+		} catch (Exception $e) {
+			$this->dbh->rollback();
+			echo json_encode(['success' => false, 'message' => '❌ Error al registrar ingreso manual: ' . $e->getMessage()]);
+		}
+	}
+
+	// ajax.php?action=get_lotes_producto
+	function get_lotes_producto()
+	{
+		extract($_POST);
+		$almacen_id = mysqli_real_escape_string($this->dbh, $almacen_id);
+		$producto_id = mysqli_real_escape_string($this->dbh, $producto_id);
+
+		$q = $this->dbh->query("SELECT lote, SUM(cantidad) as cantidad 
                              FROM movimientos_inventario 
                              WHERE producto_id='$producto_id' AND almacen_id='$almacen_id' 
                              GROUP BY lote HAVING cantidad>0");
 
-    $lotes = [];
-    while($r = $q->fetch_assoc()){
-        $lotes[] = ['lote'=>$r['lote'],'cantidad'=>$r['cantidad']];
-    }
-    echo json_encode(['success'=>true,'lotes'=>$lotes]);
-}
-
+		$lotes = [];
+		while ($r = $q->fetch_assoc()) {
+			$lotes[] = ['lote' => $r['lote'], 'cantidad' => $r['cantidad']];
+		}
+		echo json_encode(['success' => true, 'lotes' => $lotes]);
+	}
 }
