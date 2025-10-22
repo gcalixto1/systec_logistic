@@ -377,6 +377,41 @@ class Action
 		}
 		return $categoria;
 	}
+	function save_maquina()
+	{
+		extract($_POST);
+		$data = " cod_mac = '$cod_mac' ";
+		$data .= ", maquina = '$maquina' ";
+		if (empty($id)) {
+			$save = $this->dbh->query("INSERT INTO lista_maquina set " . $data);
+		} else {
+			$save = $this->dbh->query("UPDATE lista_maquina set " . $data . " where id = " . $id);
+		}
+		if ($save) {
+			return 1;
+		}
+	}
+	function delete_maquina()
+	{
+		extract($_POST);
+		$delete = $this->dbh->query("DELETE FROM umbs where id = " . $id);
+		if ($delete)
+			return 1;
+	}
+	public function Listarmaquina()
+	{
+		$sql = "SELECT * FROM umbs ORDER BY umb	 ASC";
+
+		$result = mysqli_query($this->dbh, $sql);
+
+		$categoria = array();
+		if ($result) {
+			while ($row = mysqli_fetch_assoc($result)) {
+				$categoria[] = $row;
+			}
+		}
+		return $categoria;
+	}
 	#endregion
 	#region Relaciones
 	function save_relacion()
@@ -1676,13 +1711,14 @@ class Action
 				$ref2 = $prod['ref_2'];
 				$factor = $prod['und_embalaje_minima'];
 				$subtotal = $cant * $precio;
+				$usuario = $_SESSION['login_idusuario'];
 
 				// === Insertar movimiento de entrada ===
 				$this->dbh->query("INSERT INTO movimientos_inventario 
                 (id_producto, id_interno, descripcion, cantidad, cliente_proveedor, fecha_movimiento, tipo_movimiento, num_documento, 
-                 costo_unitario, costo_total, calibre, umb, lote, almacen_id, ref1, ref2, unidades)
+                 costo_unitario, costo_total, calibre, umb, lote, almacen_id, ref1, ref2, unidades,usuario_id)
                 VALUES ('$id_producto', '$id_interno', '$descripcion', '$cant', '$proveedor', NOW(), 
-                        'Entrada OC', '$numero_oc', '$precio', '$subtotal', '$calibre', '$umb', '$lote', '$almacen_id', '$ref1', '$ref2', '$uni')");
+                        'Entrada OC', '$numero_oc', '$precio', '$subtotal', '$calibre', '$umb', '$lote', '$almacen_id', '$ref1', '$ref2', '$uni','$usuario')");
 
 				// === Actualizar o insertar en inventario ===
 				$check = $this->dbh->query("
@@ -1738,7 +1774,7 @@ class Action
 		extract($_POST);
 		$detalle = json_decode($_POST['detalle'] ?? '[]', true);
 		$almacen_id = intval($almacen_id ?? 0);
-
+		$usuario = $_SESSION['login_idusuario'];
 		if (empty($detalle)) {
 			echo json_encode(['success' => false, 'message' => 'No hay productos para registrar.']);
 			return;
@@ -1822,7 +1858,7 @@ class Action
 				// 📜 Insertar movimiento de inventario
 				$this->dbh->query("
                 INSERT INTO movimientos_inventario 
-                    (id_producto, id_interno, descripcion, cantidad, lote, almacen_id, tipo_movimiento, cliente_proveedor, num_documento, costo_unitario, costo_total, fecha_movimiento, calibre, umb, ref1, ref2,unidades)
+                    (id_producto, id_interno, descripcion, cantidad, lote, almacen_id, tipo_movimiento, cliente_proveedor, num_documento, costo_unitario, costo_total, fecha_movimiento, calibre, umb, ref1, ref2,unidades,usuario_id)
                 SELECT 
                     p.id_producto, 
                     p.str_id, 
@@ -1840,7 +1876,8 @@ class Action
                     p.umb, 
                     p.ref_1, 
                     p.ref_2,
-					(COALESCE(p.und_embalaje_minima,1) * $cantidad)
+					(COALESCE(p.und_embalaje_minima,1) * $cantidad),
+					$usuario
                 FROM producto p  
                 WHERE p.id_producto = '$producto'
             ");

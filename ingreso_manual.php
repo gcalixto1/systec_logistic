@@ -152,8 +152,17 @@ $(document).ready(function() {
                 detalle: JSON.stringify(detalle)
             },
             success: function(res) {
-                alert(res.message);
-                if (res.success) location.reload();
+                Swal.fire({
+                        title: 'Éxito!',
+                        text: res.message,
+                        icon: 'success',
+                        confirmButtonColor: '#28a745',
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            location.reload();
+                        }
+                    });
             }
         });
     });

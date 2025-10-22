@@ -20,13 +20,14 @@
     <div class="col-lg-12">
 
         <div class="col-sm-12 col-xs-12 text-right">
-            <button class="btn btn-success btn-lg" type="button" id="new_producto"><i class="fa fa-plus"></i> Nuevo
-                Producto</button>
+            <button class="btn btn-success btn-lg" type="button" id="new_producto"><i class="fa fa-plus"></i> CREAR
+                ORDEN PRODUCCION</button>
         </div>
         <br />
          <table class="table table-responsive" id="borrower-list">
     <thead class="table-dark">
         <tr>
+            <th class="text-center">#</th>
             <th class="text-center">STR ID</th>
             <th class="text-center">CÓDIGO INTERNO</th>
             <th class="text-center">DESCRIPCIÓN</th>
@@ -51,6 +52,7 @@
         while ($row = $qry->fetch_assoc()):
         ?>
             <tr>
+                <td style="font-size: 12px;"><input type="checkbox"></td>
                 <td style="font-size: 12px;"><?php echo $row['str_id'] ?></td>
                 <td style="font-size: 12px;"><?php echo $row['cod_producto'] ?></td>
                 <td style="font-size: 12px;"><?php echo $row['descripcion'] ?></td>
@@ -87,7 +89,7 @@
 <script> 
 $('#borrower-list').dataTable()
 $('#new_producto').click(function() {
-    uni_modal("Gestion de Productos", "manage_productos.php")
+    uni_modal_documentos("Gestion de Productos", "manage_productos.php")
 })
 $('#new_categoria').click(function() {
     uni_modal("Gestion de Categoria para Productos", "manage_categorias.php")

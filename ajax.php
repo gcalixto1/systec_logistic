@@ -395,5 +395,8 @@ if ($action == 'get_lotes_producto') {
     exit;
 }
 
-
+if ($action == 'save_maquina') {
+	$save = $crud->save_maquina();
+	if ($save) echo $save;
+}
 #endregion

@@ -1,0 +1,61 @@
+<?php
+include("conexionfin.php");
+header('Content-Type: application/json; charset=utf-8');
+
+// --- FILTROS OPCIONALES ---
+$almacen = isset($_GET['almacen']) && $_GET['almacen'] !== '' ? intval($_GET['almacen']) : null;
+$condAlmacen = $almacen ? "WHERE i.almacen_id = $almacen" : "";
+
+// --- CONSULTA PRINCIPAL ---
+$sql = "
+SELECT 
+    p.id_producto,
+    p.str_id,
+    p.cod_producto,
+    p.descripcion,
+    p.familia,
+    p.calibre,
+    p.und_embalaje_minima,
+    COALESCE(i.stock_unidades_kg, 0) AS stock_unidades_kg,
+    COALESCE(i.stock_caja_paca_bobinas, 0) AS stock_caja_paca_bobinas,
+    COALESCE(i.costo_unitario, 0) AS costo_unitario,
+    (COALESCE(i.stock_unidades_kg, 0) * COALESCE(i.costo_unitario, 0)) AS costo_total,
+    p.precio_lista_5,
+    (COALESCE(i.stock_unidades_kg, 0) * COALESCE(p.precio_lista_5, 0)) AS precio_total,
+    i.lote,
+    i.almacen_id,
+    a.nombre AS nombre_almacen,
+
+    -- Campos calculados / placeholders
+    0 AS inv_transito_und,
+    0 AS inv_transito_caja,
+    (COALESCE(i.stock_unidades_kg, 0)) AS total_inv_transito_und,
+    (COALESCE(i.stock_caja_paca_bobinas, 0)) AS total_inv_transito_caja,
+    COALESCE(p.lead_time, 0) AS lead_time_dias,
+    COALESCE(p.stock_minimo, 0) AS stock_minimo,
+    0 AS consumo_mensual_und,
+    0 AS consumo_mensual_caja,
+    (COALESCE(p.stock_minimo, 0) + (0 * COALESCE(p.lead_time, 0) / 30)) AS punto_reorden,
+    '-' AS alerta
+
+FROM inventario i
+INNER JOIN producto p ON p.id_producto = i.producto_id
+LEFT JOIN almacenes a ON a.id = i.almacen_id
+$condAlmacen
+ORDER BY p.descripcion
+";
+
+$result = mysqli_query($conexion, $sql);
+
+if (!$result) {
+    echo json_encode(['error' => mysqli_error($conexion)]);
+    exit;
+}
+
+$data = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $data[] = $row;
+}
+
+echo json_encode(['data' => $data], JSON_UNESCAPED_UNICODE);
+?>
