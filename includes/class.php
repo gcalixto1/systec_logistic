@@ -887,7 +887,10 @@ class Action
 	public function listarproductoauto($filtro)
 	{
 		// Consulta con los campos correctos de la tabla producto
-		$consulta = "SELECT * 
+		$consulta = "SELECT *,CASE 
+        WHEN relacion = 'KG' THEN peso_kg_paca_caja
+        ELSE und_embalaje_minima
+    END AS und_embalaje_minima 
                  FROM producto 
                  WHERE descripcion LIKE ?  
                     OR cod_producto LIKE ?  
@@ -1595,33 +1598,38 @@ class Action
 
 		// === Obtener detalle ===
 		$detalle = [];
-		$qdet = $this->dbh->query("SELECT 
-                                    d.id_detalle, 
-                                    d.producto, 
-                                    p.str_id AS id_interno, 
-                                    p.descripcion, 
-                                    d.cantidad, 
-                                    IFNULL(d.cantidad_recibida, 0) AS cantidad_recibida,
-                                    p.costo_standar as precio, 
-                                    p.umb, 
-                                    p.und_embalaje_minima
-                               FROM orden_compra_detalle d
-                               INNER JOIN producto p ON p.id_producto = d.producto
-                               WHERE d.id_oc = '$id_oc'");
+$qdet = $this->dbh->query("
+    SELECT 
+        d.id_detalle, 
+        d.producto, 
+        p.str_id AS id_interno, 
+        p.descripcion, 
+        d.cantidad,
+        IFNULL(d.cantidad_recibida, 0) AS cantidad_recibida,
+        p.costo_standar AS precio, 
+        p.umb, 
+        CASE 
+            WHEN UPPER(p.relacion) = 'KG' THEN p.peso_kg_paca_caja
+            ELSE p.und_embalaje_minima
+        END AS und_embalaje_minima
+    FROM orden_compra_detalle d
+    INNER JOIN producto p ON p.id_producto = d.producto
+    WHERE d.id_oc = '$id_oc'
+");
 
-		while ($d = $qdet->fetch_assoc()) {
-			$detalle[] = [
-				'id_detalle' => $d['id_detalle'],
-				'producto' => $d['producto'],
-				'id_interno' => $d['id_interno'],
-				'descripcion' => $d['descripcion'],
-				'cantidad' => floatval($d['cantidad']),
-				'cantidad_recibida' => floatval($d['cantidad_recibida']),
-				'precio' => floatval($d['precio']),
-				'umb' => $d['umb'] ?? '',
-				'und_embalaje_minima' => $d['und_embalaje_minima'] ?? ''
-			];
-		}
+while ($d = $qdet->fetch_assoc()) {
+    $detalle[] = [
+        'id_detalle' => $d['id_detalle'],
+        'producto' => $d['producto'],
+        'id_interno' => $d['id_interno'],
+        'descripcion' => $d['descripcion'],
+        'cantidad' => floatval($d['cantidad']),
+        'cantidad_recibida' => floatval($d['cantidad_recibida']),
+        'precio' => floatval($d['precio']),
+        'umb' => $d['umb'] ?? '',
+        'und_embalaje_minima' => floatval($d['und_embalaje_minima'] ?? 0)
+    ];
+}
 
 		// === Obtener almacenes (id incluido) ===
 		$almacenes = [];
@@ -1696,7 +1704,10 @@ class Action
 				// === Obtener datos del producto ===
 				$prod = $this->dbh->query("SELECT d.producto, p.str_id AS id_interno, p.descripcion, d.precio, 
                                               p.calibre, p.umb AS umb, p.ref_1, p.ref_2, 
-                                              COALESCE(p.und_embalaje_minima,1) AS und_embalaje_minima
+                                               CASE 
+        WHEN p.relacion = 'KG' THEN COALESCE(p.peso_kg_paca_caja,1)
+        ELSE COALESCE(p.und_embalaje_minima,1)
+    END AS und_embalaje_minima
                                        FROM orden_compra_detalle d
                                        INNER JOIN producto p ON p.id_producto = d.producto
                                        WHERE d.id_detalle = '$id_detalle' LIMIT 1")->fetch_assoc();

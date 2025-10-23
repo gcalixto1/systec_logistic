@@ -22,21 +22,21 @@
       <table id="tablaInventario" class="table table-striped table-bordered text-center w-100">
         <thead class="table-dark">
           <tr>
-            <th>STR ID</th>
-            <th>CÓD INTERNO</th>
-            <th>DESCRIPCIÓN</th>
-            <th>FAMILIA</th>
-            <th>MICRAJE</th>
-            <th>RELACIÓN</th>
-            <th>CALIBRE</th>
-            <th>UND EMBALAJE</th>
-            <th>STOCK UNID/KG</th>
-            <th>STOCK CAJA</th>
-            <th>LOTE</th>
-            <th>COSTO UNIT</th>
-            <th>COSTO TOTAL</th>
-            <th>ALMACÉN</th>
-            <th>ACCIÓN</th>
+            <th>Str ID</th>
+            <th>Cod Interno</th>
+            <th>descripcion</th>
+            <th>Familia</th>
+            <th>Micraje</th>
+            <th>relacion</th>
+            <th>Calibre</th>
+            <th>Und Embalaje</th>
+            <th>Stock unidades</th>
+            <th>Stock Caja/Paca/KG</th>
+            <th>Lote</th>
+            <th>Costo Uni</th>
+            <th>costo Total</th>
+            <th>Almacen</th>
+            <th>Accion</th>
           </tr>
         </thead>
       </table>
@@ -123,21 +123,48 @@
         return json.data || [];
       }
     },
-    columns: [
-      { data: "str_id" },
-      { data: "cod_producto" },
-      { data: "descripcion" },
-      { data: "familia" },
-      { data: "micraje" },
-      { data: "relacion" },
-      { data: "calibre" },
-      { data: "und_embalaje_minima" },
-      { data: "stock_unidades_kg" },
-      { data: "stock_caja_paca_bobinas" },
-      { data: "lote" },
-      { data: "costo_unitario" },
-      { data: "costo_total" },
-      { data: "nombre_almacen" },
+    columns: [{
+        data: "str_id"
+      },
+      {
+        data: "cod_producto"
+      },
+      {
+        data: "descripcion"
+      },
+      {
+        data: "familia"
+      },
+      {
+        data: "micraje"
+      },
+      {
+        data: "relacion"
+      },
+      {
+        data: "calibre"
+      },
+      {
+        data: "und_embalaje_minima"
+      },
+      {
+        data: "stock_unidades_kg"
+      },
+      {
+        data: "stock_caja_paca_bobinas"
+      },
+      {
+        data: "lote"
+      },
+      {
+        data: "costo_unitario"
+      },
+      {
+        data: "costo_total"
+      },
+      {
+        data: "nombre_almacen"
+      },
       {
         data: null,
         render: function(data) {
@@ -181,7 +208,10 @@
     $('#tras_cantidad_cajas').val('1');
 
     // Cargar lotes
-    $.getJSON('ajax_lotes_producto.php', { producto_id: d.id, almacen_id: d.almacenid }, function(resp) {
+    $.getJSON('ajax_lotes_producto.php', {
+      producto_id: d.id,
+      almacen_id: d.almacenid
+    }, function(resp) {
       let opciones = '<option value="">Selecciona lote</option>';
       resp.forEach(l => {
         opciones += `<option value="${l.lote}">${l.lote} (Stock: ${l.stock} und.)</option>`;
@@ -217,29 +247,29 @@
     };
 
     if (!data.almacen_destino || !data.lote || !data.cantidad_unidades) {
-       Swal.fire({
-                title: 'Advertencia!',
-                text: '⚠️ Todos los campos son obligatorios.',
-                icon: 'warning',
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'OK'
-            });
-            return;
+      Swal.fire({
+        title: 'Advertencia!',
+        text: '⚠️ Todos los campos son obligatorios.',
+        icon: 'warning',
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'OK'
+      });
+      return;
     }
 
     $.post('ajax_traslado.php', data, function(resp) {
       if (resp.success) {
         Swal.fire({
-                        title: 'Éxito!',
-                        text: resp.message,
-                        icon: 'success',
-                        confirmButtonColor: '#28a745',
-                        confirmButtonText: 'OK'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            location.reload();
-                        }
-                    });
+          title: 'Éxito!',
+          text: resp.message,
+          icon: 'success',
+          confirmButtonColor: '#28a745',
+          confirmButtonText: 'OK'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        });
       }
     }, 'json');
   });

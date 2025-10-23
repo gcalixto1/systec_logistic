@@ -1,17 +1,17 @@
 <?php
-if ($_SERVER['HTTP_HOST'] === 'localhost') {
-    // LOCAL
-    $host = "localhost";
-    $user = "root";
-    $clave = "";
-    $bd = "systec_logistic";
-} else {
+// if ($_SERVER['HTTP_HOST'] === 'localhost') {
+//     // LOCAL
+//     $host = "localhost";
+//     $user = "root";
+//     $clave = "";
+//     $bd = "systec_logistic";
+// } else {
     // SERVIDOR
-    $host = "localhost";
-    $user = "u424078311_systec";
+    $host = "proderp.com";
+    $user = "u424078311_developer";
     $clave = "Elcreador2025*";
-    $bd = "u424078311_systec_logis";
-}
+    $bd = "u424078311_pruebas_logist";
+// }
 
 $conexion = new mysqli($host, $user, $clave, $bd);
 

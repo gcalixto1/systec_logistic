@@ -1,5 +1,40 @@
 <?php include("conexionfin.php"); ?>
+<style>
+    .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
+    .spinner {
+        border: 6px solid #ccc;
+        border-top: 6px solid #007bff;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+<div id="spinner"
+    style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(255, 255, 255, 0.77);z-index:9999;text-align:center;padding-top:200px;font-size:24px;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+    </div>
+    <p>Procesando Ingreso de Orden de Compra...</p>
+</div>
 <div class="container-fluid">
     <h4 class="mb-4">Ingreso de Órdenes de Compra</h4>
 
@@ -9,7 +44,7 @@
         <select id="ordenSelect" class="form-control">
             <option value="">-- Seleccione una orden --</option>
             <?php
-            $res = $conexion->query("SELECT id_oc, numero_oc FROM orden_compra ORDER BY id_oc DESC");
+            $res = $conexion->query("SELECT id_oc, numero_oc FROM orden_compra where estado<>'COMPLETA' ORDER BY id_oc DESC");
             while ($r = $res->fetch_assoc()) {
                 echo "<option value='{$r['id_oc']}'>{$r['numero_oc']}</option>";
             }
@@ -64,6 +99,13 @@
 </div>
 
 <script>
+    function showSpinner() {
+        $('#spinner').show();
+    }
+
+    function hideSpinner() {
+        $('#spinner').hide();
+    }
     $(document).ready(function() {
 
         // === Cargar datos al seleccionar orden ===
@@ -77,7 +119,9 @@
             $.ajax({
                 url: 'ajax.php?action=get_orden',
                 type: 'POST',
-                data: { id_oc: id_oc },
+                data: {
+                    id_oc: id_oc
+                },
                 dataType: 'json',
                 success: function(res) {
                     if (res.success) {
@@ -193,6 +237,7 @@
             let id_oc = $('#ordenSelect').val();
             let estado = $('#estado').val();
             let detalle = [];
+            showSpinner();
 
             $('#detalleOrden tbody tr').each(function() {
                 let unidades = parseFloat($(this).find('.cant-unidades').val());
@@ -225,8 +270,11 @@
                 },
                 dataType: 'json',
                 success: function(res) {
+
                     Swal.fire('Resultado', res.message, res.success ? 'success' : 'error');
-                    if (res.success) setTimeout(() => location.reload(), 1500);
+                    if (res.success)
+                        hideSpinner();
+                    location.reload();
                 }
             });
         });

@@ -23,11 +23,11 @@ $almacenes = $conexion->query("SELECT id, nombre FROM almacenes ORDER BY nombre 
       <div id="formProducto" style="display:none;">
         <div class="row g-3 mb-3">
           <div class="col-md-2">
-            <label class="form-label fw-bold">Cajas:</label>
+            <label class="form-label fw-bold">Cajas / Paca / Bobina:</label>
             <input type="number" id="cajas" class="form-control" min="0" step="any">
           </div>
           <div class="col-md-2">
-            <label class="form-label fw-bold">Cantidad Real:</label>
+            <label class="form-label fw-bold">Cantidad (unidades / KG):</label>
             <input type="number" id="cantidad" class="form-control" min="0" step="any">
           </div>
           <div class="col-md-2">
@@ -111,7 +111,7 @@ $('#buscador').on('keyup', function(){
   }
 
   $.ajax({
-    url: 'buscar_producto.php',
+    url: 'buscar_producto.php', 
     method: 'POST',
     data: {query: query},
     success: function(data){

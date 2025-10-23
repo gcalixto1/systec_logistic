@@ -7,7 +7,42 @@ $query = $conexion->query("SELECT * FROM consecutivos WHERE codigo_consecutivo='
 $row = $query->fetch_assoc();
 $numeroOC = $row ? str_pad($row['valor'], 6, '0', STR_PAD_LEFT) : '';
 ?>
+<style>
+    .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
+    .spinner {
+        border: 6px solid #ccc;
+        border-top: 6px solid #007bff;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+<div id="spinner"
+    style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(255, 255, 255, 0.77);z-index:9999;text-align:center;padding-top:200px;font-size:24px;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+    </div>
+    <p>Procesando Orden de Compra...</p>
+</div>
 <div class="container-fluid">
     <h3 class="text-center mb-4">🧾 Generar Orden de Compra</h3>
 
@@ -67,13 +102,13 @@ $numeroOC = $row ? str_pad($row['valor'], 6, '0', STR_PAD_LEFT) : '';
                         <label>IVA</label>
                         <input type="checkbox" class="form-check-input" id="checkIVAProducto" checked> Aplicar IVA
                     </div>
-                    
+
                 </div>
                 <br>
                 <br>
                 <div class="col-md-2">
-                        <button type="button" class="btn btn-primary w-100" id="btnAgregar">➕ Agregar</button>
-                    </div>
+                    <button type="button" class="btn btn-primary w-100" id="btnAgregar">➕ Agregar</button>
+                </div>
             </div>
         </div>
 
@@ -114,85 +149,109 @@ $numeroOC = $row ? str_pad($row['valor'], 6, '0', STR_PAD_LEFT) : '';
 </div>
 
 <script>
-let detalle = [];
-// jQuery.noConflict();
+    let detalle = [];
+    // jQuery.noConflict();
+    function showSpinner() {
+        $('#spinner').show();
+    }
 
-// ================== SELECT2 PROVEEDOR ==================
-$('#proveedor').select2({
-    placeholder: "Buscar proveedor...",
-    ajax: {
-        url: 'buscar_proveedores.php',
-        dataType: 'json',
-        delay: 250,
-        data: params => ({ q: params.term }),
-        processResults: function(data){
-            // tus archivos ya devuelven { results: [...] }
-            return data; 
+    function hideSpinner() {
+        $('#spinner').hide();
+    }
+
+    // ================== SELECT2 PROVEEDOR ==================
+    $('#proveedor').select2({
+        placeholder: "Buscar proveedor...",
+        ajax: {
+            url: 'buscar_proveedores.php',
+            dataType: 'json',
+            delay: 250,
+            data: params => ({
+                q: params.term
+            }),
+            processResults: function(data) {
+                // tus archivos ya devuelven { results: [...] }
+                return data;
+            }
+        },
+        minimumInputLength: 1
+    });
+    // ================== SELECT2 PRODUCTO ==================
+    $('#producto').select2({
+        placeholder: "Buscar producto por código o descripción...",
+        ajax: {
+            url: 'buscar_productoC.php',
+            dataType: 'json',
+            delay: 250,
+            data: params => ({
+                q: params.term
+            }),
+            processResults: function(data) {
+                return data; // ya vienen como { results: [...] }
+            }
+        },
+        minimumInputLength: 1
+    });
+
+    $('#producto').on('select2:select', function(e) {
+        let data = e.params.data;
+        $('#descproducto').val(data.text);
+        $('#idPR').val(data.id);
+        $('#precio').val(parseFloat(data.precio || 0).toFixed(2));
+        unidadesPorCaja = parseFloat(data.unidades) || 1;
+        $('#caja').val(1);
+        $('#cantidad').val(unidadesPorCaja);
+        $('#caja').val(1);
+        calcularSubtotal();
+    });
+
+    $('#cantidad, #precio').on('keyup change', calcularSubtotal);
+
+    function calcularSubtotal() {
+        let cantidad = parseFloat($('#caja').val()) || 0;
+        let precio = parseFloat($('#precio').val()) || 0;
+        $('#subtotal').val((cantidad * precio).toFixed(2));
+    }
+
+    // ================== AGREGAR PRODUCTO ==================
+    $('#btnAgregar').on('click', () => {
+        let producto = $('#idPR').val();
+        let productod = $('#descproducto').val();
+        let cantidad = parseFloat($('#cantidad').val());
+        let caja = parseFloat($('#caja').val());
+        let precio = parseFloat($('#precio').val());
+        let subtotal = caja * precio;
+        let aplicaIVA = $('#checkIVAProducto').is(':checked');
+        let iva = aplicaIVA ? subtotal * 0.19 : 0; // 19% IVA (Colombia)
+        let total = subtotal + iva;
+
+        if (!producto || cantidad <= 0) {
+            Swal.fire("Completa los campos del producto");
+            return;
         }
-    },
-    minimumInputLength: 1
-});
-// ================== SELECT2 PRODUCTO ==================
-$('#producto').select2({
-    placeholder: "Buscar producto por código o descripción...",
-    ajax: {
-        url: 'buscar_productoC.php',
-        dataType: 'json',
-        delay: 250,
-        data: params => ({ q: params.term }),
-        processResults: function(data){
-            return data; // ya vienen como { results: [...] }
-        }
-    },
-    minimumInputLength: 1
-});
 
-$('#producto').on('select2:select', function(e){
-    let data = e.params.data;
-    $('#descproducto').val(data.text);
-    $('#idPR').val(data.id);
-    $('#precio').val(parseFloat(data.precio || 0).toFixed(2));
-    unidadesPorCaja = parseFloat(data.unidades) || 1;
-    $('#caja').val(1);
-    $('#cantidad').val(unidadesPorCaja);
-     $('#caja').val(1);
-    calcularSubtotal();
-});
+        detalle.push({
+            producto,
+            productod,
+            cantidad,
+            caja,
+            precio,
+            subtotal,
+            iva,
+            total
+        });
+        renderTabla();
+        actualizarTotales();
 
-$('#cantidad, #precio').on('keyup change', calcularSubtotal);
-function calcularSubtotal(){
-    let cantidad = parseFloat($('#caja').val())||0;
-    let precio = parseFloat($('#precio').val())||0;
-    $('#subtotal').val((cantidad*precio).toFixed(2));
-}
+        $('#producto').val(null).trigger('change');
+        $('#cantidad,#caja,#precio,#subtotal').val('');
+    });
 
-// ================== AGREGAR PRODUCTO ==================
-$('#btnAgregar').on('click', ()=>{
-    let producto = $('#idPR').val();
-    let productod = $('#descproducto').val();
-    let cantidad = parseFloat($('#cantidad').val());
-    let caja = parseFloat($('#caja').val());
-    let precio = parseFloat($('#precio').val());
-    let subtotal = caja * precio;
-    let aplicaIVA = $('#checkIVAProducto').is(':checked');
-    let iva = aplicaIVA ? subtotal * 0.19 : 0; // 19% IVA (Colombia)
-    let total = subtotal + iva;
-
-    if(!producto || cantidad<=0) { Swal.fire("Completa los campos del producto"); return; }
-
-    detalle.push({producto,productod, cantidad,caja, precio, subtotal, iva, total});
-    renderTabla();
-    actualizarTotales();
-
-    $('#producto').val(null).trigger('change');
-    $('#cantidad,#caja,#precio,#subtotal').val('');
-});
-
-function renderTabla(){
-    let tbody = $('#tablaDetalle tbody');
-    tbody.empty();
-    detalle.forEach((f,i)=>{
-        tbody.append(`<tr>
+    function renderTabla() {
+        let tbody = $('#tablaDetalle tbody');
+        tbody.empty();
+        detalle.forEach((f, i) => {
+            tbody.append(`<tr>
             <td>${f.productod}</td>
             <td>${f.cantidad}</td>
             <td>${f.caja}</td>
@@ -202,71 +261,73 @@ function renderTabla(){
             <td>${f.total.toFixed(2)}</td>
             <td><button class="btn btn-danger btn-sm eliminar" data-i="${i}">🗑️</button></td>
         </tr>`);
-    });
-}
-$(document).on('click','.eliminar',function(){
-    let i=$(this).data('i');
-    detalle.splice(i,1);
-    renderTabla();
-    actualizarTotales();
-});
-
-function actualizarTotales(){
-    let subtotal = detalle.reduce((a,f)=>a+f.subtotal,0);
-    let iva = detalle.reduce((a,f)=>a+f.iva,0);
-    let total = detalle.reduce((a,f)=>a+f.total,0);
-    $('#totalSubtotal').text(subtotal.toFixed(2));
-    $('#totalIVA').text(iva.toFixed(2));
-    $('#totalFinal').text(total.toFixed(2));
-}
-
-// ================== GUARDAR ORDEN ==================
-$('#formOC').on('submit', function(e){
-    e.preventDefault();
-    if(detalle.length == 0){
-        Swal.fire("Agregue al menos un producto");
-        return;
+        });
     }
-    let formData = new FormData(this);
-    formData.append('detalle', JSON.stringify(detalle));
-
-    $.ajax({
-        url:'ajax.php?action=save_orden_compra',
-        type:'POST',
-        data:formData,
-        processData:false,
-        contentType:false,
-        dataType:'json',
-        success:function(resp){
-            if(resp.success){
-                Swal.fire({
-                    icon:'success',
-                    title:'✅ Orden guardada',
-                    text:`Número: ${resp.numero_oc}`
-                }).then(()=> window.open('doc_orden_compra.php?id='+resp.id_oc, '_blank'));
-            }else{
-                Swal.fire('Error', resp.message, 'error');
-            }
-        }
+    $(document).on('click', '.eliminar', function() {
+        let i = $(this).data('i');
+        detalle.splice(i, 1);
+        renderTabla();
+        actualizarTotales();
     });
-});
 
-$('#cantidad').on('change keyup', function(){
-    let cantidadTotal = parseFloat($(this).val()) || 0;
-    let cajas = cantidadTotal / unidadesPorCaja; // calculo inverso
-    $('#caja').val(cajas.toFixed(2));
+    function actualizarTotales() {
+        let subtotal = detalle.reduce((a, f) => a + f.subtotal, 0);
+        let iva = detalle.reduce((a, f) => a + f.iva, 0);
+        let total = detalle.reduce((a, f) => a + f.total, 0);
+        $('#totalSubtotal').text(subtotal.toFixed(2));
+        $('#totalIVA').text(iva.toFixed(2));
+        $('#totalFinal').text(total.toFixed(2));
+    }
 
-    let precio = parseFloat($('#precio').val())||0;
-    $('#subtotal').val((cajas * precio).toFixed(2));
-});
+    // ================== GUARDAR ORDEN ==================
+    $('#formOC').on('submit', function(e) {
+        e.preventDefault();
+        showSpinner();
+        if (detalle.length == 0) {
+            Swal.fire("Agregue al menos un producto");
+            return;
+        }
+        let formData = new FormData(this);
+        formData.append('detalle', JSON.stringify(detalle));
 
-// Cuando cambia caja, actualiza cantidad (por si el usuario cambia cajas directamente)
-$('#caja').on('change keyup', function(){
-    let cajas = parseFloat($(this).val())||0;
-    let cantidadTotal = cajas * unidadesPorCaja; // normal
-    $('#cantidad').val(cantidadTotal);
+        $.ajax({
+            url: 'ajax.php?action=save_orden_compra',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(resp) {
+                if (resp.success) {
+                    hideSpinner();
+                    Swal.fire({
+                        icon: 'success',
+                        title: '✅ Orden guardada',
+                        text: `Número: ${resp.numero_oc}`
+                    }).then(() => window.open('doc_orden_compra.php?id=' + resp.id_oc, '_blank'));
+                } else {
+                    Swal.fire('Error', resp.message, 'error');
+                }
+            }
+        });
+    });
 
-    let precio = parseFloat($('#precio').val())||0;
-    $('#subtotal').val((cajas * precio).toFixed(2));
-});
+    $('#cantidad').on('change keyup', function() {
+        let cantidadTotal = parseFloat($(this).val()) || 0;
+        let cajas = cantidadTotal / unidadesPorCaja; // calculo inverso
+        $('#caja').val(cajas.toFixed(2));
+
+        let precio = parseFloat($('#precio').val()) || 0;
+        $('#subtotal').val((cajas * precio).toFixed(2));
+    });
+
+    // Cuando cambia caja, actualiza cantidad (por si el usuario cambia cajas directamente)
+    $('#caja').on('change keyup', function() {
+        let cajas = parseFloat($(this).val()) || 0;
+        let cantidadTotal = cajas * unidadesPorCaja; // normal
+        $('#cantidad').val(cantidadTotal);
+
+        let precio = parseFloat($('#precio').val()) || 0;
+        $('#subtotal').val((cajas * precio).toFixed(2));
+    });
 </script>

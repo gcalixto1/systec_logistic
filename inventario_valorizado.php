@@ -70,8 +70,8 @@ $result = $conexion->query($sql);
                     <th>Código</th>
                     <th>Descripción</th>
                     <th>Unidad Embalaje</th>
-                    <th>Stock (kg)</th>
-                    <th>Caja (kg)</th>
+                    <th>Stock unidades</th>
+                    <th>Stock Caja/Paca/KG</th>
                     <th>Costo Unitario</th>
                     <th>Valor Inventario</th>
                     <th>Precio Lista</th>

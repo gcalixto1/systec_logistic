@@ -28,8 +28,8 @@ SELECT
     p.descripcion AS producto,
     m.lote,
     m.tipo_movimiento,
-    m.cantidad,
-    m.unidades,
+    I.stock_unidades_kg,
+    I.stock_caja_paca_bobinas,
     m.umb,
     m.cliente_proveedor,
     m.almacen_id,
@@ -40,6 +40,7 @@ SELECT
     u.nombre AS usuario
 FROM movimientos_inventario m
 INNER JOIN producto p ON m.id_producto = p.id_producto
+INNER JOIN inventario I ON I.producto_id = p.id_producto
 LEFT JOIN usuario u ON m.usuario_id = u.idusuario
 $condicion
 ORDER BY m.fecha_movimiento DESC
@@ -78,7 +79,8 @@ if (!$result) {
             <th>Descripción</th>
             <th>Lote</th>
             <th>Tipo Movimiento</th>
-            <th>Cantidad</th>
+            <th>Stock Unidades</th>
+            <th>Stock Caja/Paca/KG</th>
             <th>Costo Unitario</th>
             <th>Costo Total</th>
             <th>Fecha</th>
@@ -99,7 +101,8 @@ if (!$result) {
                     <td>{$row['producto']}</td>
                     <td>{$row['lote']}</td>
                     <td class='{$clase}'>{$row['tipo_movimiento']}</td>
-                    <td>{$row['cantidad']}</td>
+                    <td>{$row['stock_unidades_kg']}</td>
+                    <td>{$row['stock_caja_paca_bobinas']}</td>
                     <td>{$row['costo_unitario']}</td>
                     <td>{$row['costo_total']}</td>
                     <td>{$row['fecha_movimiento']}</td>

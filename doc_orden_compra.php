@@ -139,7 +139,10 @@ function doc_orden_compra($id_orden, $conexion)
     $pdf->SetFont('Arial', '', 10);
 
     // --- Detalle ---
-    $result = $conexion->query("SELECT do.*,p.descripcion,p.und_embalaje_minima FROM orden_compra_detalle do inner join producto p ON p.id_producto = do.producto WHERE id_oc= '$id_orden'");
+    $result = $conexion->query("SELECT do.*,p.descripcion,CASE 
+        WHEN relacion = 'KG' THEN peso_kg_paca_caja
+        ELSE und_embalaje_minima
+    END AS und_embalaje_minima  FROM orden_compra_detalle do inner join producto p ON p.id_producto = do.producto WHERE id_oc= '$id_orden'");
     while ($row = $result->fetch_assoc()) {
 
         $nb = max(

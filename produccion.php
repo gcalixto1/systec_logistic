@@ -10,7 +10,7 @@
     margin-top: -4%;
     margin-left: 75%;
     width: 25%;
-}
+} 
 </style>
 <div class="container-fluid">
     <div class="card-header">
