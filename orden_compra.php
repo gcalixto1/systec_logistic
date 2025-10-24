@@ -83,11 +83,11 @@ $numeroOC = $row ? str_pad($row['valor'], 6, '0', STR_PAD_LEFT) : '';
                         <input type="hidden" id="idPR" name="idPR">
                     </div>
                     <div class="col-md-2">
-                        <label>Cantidad (Unidades)</label>
+                        <label>Unds/Kg</label>
                         <input type="number" class="form-control" id="cantidad" placeholder="0">
                     </div>
                     <div class="col-md-2">
-                        <label>Caja / Paca / kg</label>
+                        <label>Caja/Paca/Bob</label>
                         <input type="number" class="form-control" id="caja" placeholder="0">
                     </div>
                     <div class="col-md-2">
@@ -121,8 +121,8 @@ $numeroOC = $row ? str_pad($row['valor'], 6, '0', STR_PAD_LEFT) : '';
                         <thead class="table-light">
                             <tr>
                                 <th>Producto</th>
-                                <th>Cantidad(unidades)</th>
-                                <th>Caja / Paca / KG</th>
+                                <th>Unds/Kg</th>
+                                <th>Caja/Paca/Bob</th>
                                 <th>Costo Unit.</th>
                                 <th>Subtotal</th>
                                 <th>IVA</th>

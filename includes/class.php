@@ -1781,100 +1781,115 @@ while ($d = $qdet->fetch_assoc()) {
 
 
 	function save_ingreso_manual()
-	{
-		extract($_POST);
-		$detalle = json_decode($_POST['detalle'] ?? '[]', true);
-		$almacen_id = intval($almacen_id ?? 0);
-		$usuario = $_SESSION['login_idusuario'];
-		if (empty($detalle)) {
-			echo json_encode(['success' => false, 'message' => 'No hay productos para registrar.']);
-			return;
-		}
+{
+    extract($_POST);
+    $detalle = json_decode($_POST['detalle'] ?? '[]', true);
+    $almacen_id = intval($almacen_id ?? 0);
+    $usuario = $_SESSION['login_idusuario'];
 
-		if ($almacen_id == 0) {
-			echo json_encode(['success' => false, 'message' => 'Debe seleccionar un almacén.']);
-			return;
-		}
+    if (empty($detalle)) {
+        echo json_encode(['success' => false, 'message' => 'No hay productos para registrar.']);
+        return;
+    }
 
-		$fecha = mysqli_real_escape_string($this->dbh, $fecha);
-		$proveedor = mysqli_real_escape_string($this->dbh, $proveedor);
-		$observacion = mysqli_real_escape_string($this->dbh, $observacion);
+    if ($almacen_id == 0) {
+        echo json_encode(['success' => false, 'message' => 'Debe seleccionar un almacén.']);
+        return;
+    }
 
-		// 🔒 Iniciar transacción
-		$this->dbh->begin_transaction();
+    $fecha = mysqli_real_escape_string($this->dbh, $fecha);
+    $proveedor = mysqli_real_escape_string($this->dbh, $proveedor);
+    $observacion = mysqli_real_escape_string($this->dbh, $observacion);
 
-		try {
-			// Crear encabezado de ingreso manual
-			$this->dbh->query("INSERT INTO ingreso_manual (fecha, proveedor_id, observacion, tipo_movimiento)
-                           VALUES ('$fecha','$proveedor','$observacion','ENTRADA MANUAL')");
-			$id_ingreso = $this->dbh->insert_id;
+    $this->dbh->begin_transaction();
 
-			// Generar lote global correlativo
-			$resLote = $this->dbh->query("SELECT IFNULL(MAX(CAST(SUBSTRING(lote,1,5) AS UNSIGNED)),0)+1 AS correlativo 
+    try {
+        // 🧾 Crear encabezado de ingreso manual
+        $this->dbh->query("
+            INSERT INTO ingreso_manual (fecha, proveedor_id, observacion, tipo_movimiento)
+            VALUES ('$fecha','$proveedor','$observacion','ENTRADA MANUAL')
+        ");
+        $id_ingreso = $this->dbh->insert_id;
+
+        // 🔢 Generar lote correlativo
+        $resLote = $this->dbh->query("SELECT IFNULL(MAX(CAST(SUBSTRING(lote,1,5) AS UNSIGNED)),0)+1 AS correlativo 
                                       FROM ingreso_manual_detalle");
-			$loteRow = $resLote->fetch_assoc();
-			$correlativo = str_pad($loteRow['correlativo'], 5, '0', STR_PAD_LEFT);
-			$fechaLote = date('dmy');
+        $loteRow = $resLote->fetch_assoc();
+        $correlativo = str_pad($loteRow['correlativo'], 5, '0', STR_PAD_LEFT);
+        $fechaLote = date('dmy');
 
-			foreach ($detalle as $d) {
-				$producto = intval($d['producto']);
-				$cantidad = floatval($d['cantidad']);
-				$loteProd = trim($d['lote']) ?: $correlativo . $fechaLote; // si no hay lote manual, genera automático
-				$costo = floatval($d['costo']);
-				$total = $cantidad * $costo;
+        foreach ($detalle as $d) {
+            $producto = intval($d['producto']);
+            $cantidad = floatval($d['unidades']);
+            $cajas = floatval($d['cajas']);
+            $loteProd = trim($d['lote']) ?: $correlativo . $fechaLote;
+            $costo = floatval($d['costo']);
+            $total = $cantidad * $costo;
 
-				// Insertar detalle
-				$this->dbh->query("INSERT INTO ingreso_manual_detalle 
+            // Insertar detalle
+            $this->dbh->query("
+                INSERT INTO ingreso_manual_detalle 
                 (id_ingreso, producto_id, cantidad, lote, almacen_id, costo_unitario, costo_total)
-                VALUES ('$id_ingreso','$producto','$cantidad','$loteProd','$almacen_id','$costo','$total')");
+                VALUES ('$id_ingreso','$producto','$cantidad','$loteProd','$almacen_id','$costo','$total')
+            ");
 
-				// 📦 Verificar si ya existe el producto + almacen + lote en inventario
-				$check = $this->dbh->query("
+            // 📦 Verificar si ya existe el producto + almacen + lote en inventario
+            $check = $this->dbh->query("
                 SELECT id_inventario FROM inventario 
                 WHERE producto_id = '$producto' 
                   AND almacen_id = '$almacen_id' 
                   AND lote = '$loteProd'
             ");
 
-				if ($check->num_rows > 0) {
-					// ✅ Ya existe → actualizar stock sumando
-					$this->dbh->query("
+            if ($check->num_rows > 0) {
+                // ✅ Actualizar stock existente
+                $this->dbh->query("
                     UPDATE inventario i
                     JOIN producto p ON p.id_producto = i.producto_id
                     SET 
-                        i.stock_unidades_kg = i.stock_unidades_kg + (COALESCE(p.und_embalaje_minima,1) * $cantidad),
-                        i.stock_caja_paca_bobinas = i.stock_caja_paca_bobinas + $cantidad,
+                        i.stock_unidades_kg = i.stock_unidades_kg + 
+                            (CASE 
+                                WHEN p.relacion = 'KG' THEN (p.peso_kg_paca_caja * $cajas)
+                                ELSE (p.und_embalaje_minima * $cajas)
+                             END),
+                        i.stock_caja_paca_bobinas = i.stock_caja_paca_bobinas + $cajas,
                         i.costo_unitario = '$costo',
                         i.fecha_actualizacion = NOW()
                     WHERE i.producto_id = '$producto'
                       AND i.almacen_id = '$almacen_id'
                       AND i.lote = '$loteProd'
                 ");
-				} else {
-					// ➕ No existe → insertar nuevo registro en inventario
-					$this->dbh->query("
-                    INSERT INTO inventario (producto_id, almacen_id, lote, stock_unidades_kg, stock_caja_paca_bobinas, costo_unitario)
+            } else {
+                // ➕ Insertar nuevo registro en inventario
+                $this->dbh->query("
+                    INSERT INTO inventario 
+                        (producto_id, almacen_id, lote, stock_unidades_kg, stock_caja_paca_bobinas, costo_unitario)
                     SELECT 
                         p.id_producto,
                         '$almacen_id',
                         '$loteProd',
-                        (COALESCE(p.und_embalaje_minima,1) * $cantidad),
-                        '$cantidad',
+                        (CASE 
+                            WHEN p.relacion = 'KG' THEN (p.peso_kg_paca_caja * $cajas)
+                            ELSE (p.und_embalaje_minima * $cajas)
+                         END),
+                        '$cajas',
                         '$costo'
                     FROM producto p
                     WHERE p.id_producto = '$producto'
                 ");
-				}
+            }
 
-				// 📜 Insertar movimiento de inventario
-				$this->dbh->query("
+            // 🧾 Registrar movimiento
+            $this->dbh->query("
                 INSERT INTO movimientos_inventario 
-                    (id_producto, id_interno, descripcion, cantidad, lote, almacen_id, tipo_movimiento, cliente_proveedor, num_documento, costo_unitario, costo_total, fecha_movimiento, calibre, umb, ref1, ref2,unidades,usuario_id)
+                    (id_producto, id_interno, descripcion, cantidad, lote, almacen_id, tipo_movimiento, 
+                     cliente_proveedor, num_documento, costo_unitario, costo_total, fecha_movimiento, 
+                     calibre, umb, ref1, ref2, unidades, usuario_id)
                 SELECT 
                     p.id_producto, 
                     p.str_id, 
                     p.descripcion, 
-                    '$cantidad', 
+                    '$cajas', 
                     '$loteProd', 
                     '$almacen_id', 
                     'Entrada manual', 
@@ -1887,22 +1902,24 @@ while ($d = $qdet->fetch_assoc()) {
                     p.umb, 
                     p.ref_1, 
                     p.ref_2,
-					(COALESCE(p.und_embalaje_minima,1) * $cantidad),
-					$usuario
+                    (CASE 
+                        WHEN p.relacion = 'KG' THEN (p.peso_kg_paca_caja * $cajas)
+                        ELSE (p.und_embalaje_minima * $cajas)
+                     END),
+                    $usuario
                 FROM producto p  
                 WHERE p.id_producto = '$producto'
             ");
-			}
+        }
 
-			// 💾 Confirmar transacción
-			$this->dbh->commit();
+        $this->dbh->commit();
+        echo json_encode(['success' => true, 'message' => '✅ Ingreso manual registrado correctamente.']);
+    } catch (Exception $e) {
+        $this->dbh->rollback();
+        echo json_encode(['success' => false, 'message' => '❌ Error al registrar ingreso manual: ' . $e->getMessage()]);
+    }
+}
 
-			echo json_encode(['success' => true, 'message' => '✅ Ingreso manual registrado correctamente.']);
-		} catch (Exception $e) {
-			$this->dbh->rollback();
-			echo json_encode(['success' => false, 'message' => '❌ Error al registrar ingreso manual: ' . $e->getMessage()]);
-		}
-	}
 
 	// ajax.php?action=get_lotes_producto
 	function get_lotes_producto()

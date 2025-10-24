@@ -1,12 +1,14 @@
 <?php
 include("conexionfin.php");
-header('Content-Type: application/json; charset=utf-8');
+header('Content-Type: application/json');
 
-// --- Filtro por almacén (opcional) ---
-$almacen = isset($_GET['almacen']) && $_GET['almacen'] !== '' ? intval($_GET['almacen']) : null;
-$condAlmacen = $almacen ? "WHERE i.almacen_id = $almacen" : "";
+$almacen = $_GET['almacen'] ?? '';
 
-// --- Consulta principal ---
+$filtro = "";
+if (!empty($almacen)) {
+    $filtro = "AND i.almacen_id = '$almacen'";
+}
+
 $sql = "
 SELECT 
     p.id_producto,
@@ -17,59 +19,33 @@ SELECT
     p.micraje,
     p.relacion,
     p.calibre,
-    p.und_embalaje_minima,
+    -- Si la relación es KG se usa peso_kg_paca_caja, si no, und_embalaje_minima
+    CASE 
+        WHEN p.relacion = 'KG' THEN p.peso_kg_paca_caja
+        ELSE p.und_embalaje_minima
+    END AS und_embalaje_minima,
+    
+    i.stock_unidades_kg AS stock_unidades_kg,
+    i.stock_caja_paca_bobinas AS stock_caja_paca_bobinas,
     i.lote,
-    i.almacen_id,
+    i.costo_unitario,
+    (i.stock_unidades_kg * i.costo_unitario) AS costo_total,
     a.nombre AS nombre_almacen,
-    -- Stock actual en unidades/kg
-    COALESCE(SUM(i.stock_unidades_kg), 0) AS stock_unidades_kg,
-    -- Stock actual en cajas/pacas
-    COALESCE(SUM(i.stock_caja_paca_bobinas), 0) AS stock_caja_paca_bobinas,
-    -- Promedio del costo unitario
-    COALESCE(AVG(i.costo_unitario), 0) AS costo_unitario,
-    -- Valor total valorizado
-    COALESCE(SUM(i.stock_unidades_kg * i.costo_unitario), 0) AS costo_total
+    a.id AS almacen_id
+
 FROM inventario i
-INNER JOIN producto p ON i.producto_id = p.id_producto
-LEFT JOIN almacenes a ON a.id = i.almacen_id
-$condAlmacen
-GROUP BY p.id_producto, i.lote, i.almacen_id
-ORDER BY p.descripcion, i.lote
+INNER JOIN producto p ON p.id_producto = i.producto_id
+INNER JOIN almacenes a ON a.id = i.almacen_id
+WHERE 1=1 and stock_caja_paca_bobinas <> '0.00' AND stock_unidades_kg<> '0.00' $filtro
+ORDER BY p.descripcion ASC
 ";
 
-// --- Ejecutar y manejar errores ---
-$res = mysqli_query($conexion, $sql);
-if (!$res) {
-    echo json_encode([
-        'error' => true,
-        'message' => 'Error en la consulta SQL: ' . mysqli_error($conexion)
-    ]);
-    exit;
-}
-
-// --- Convertir resultados a array ---
+$result = mysqli_query($conexion, $sql);
 $data = [];
-while ($row = mysqli_fetch_assoc($res)) {
-    $data[] = [
-        'id_producto' => $row['id_producto'],
-        'str_id' => $row['str_id'],
-        'cod_producto' => $row['cod_producto'],
-        'descripcion' => $row['descripcion'],
-        'familia' => $row['familia'],
-        'micraje' => $row['micraje'],
-        'relacion' => $row['relacion'],
-        'calibre' => $row['calibre'],
-        'und_embalaje_minima' => $row['und_embalaje_minima'],
-        'lote' => $row['lote'],
-        'almacen_id' => $row['almacen_id'],
-        'nombre_almacen' => $row['nombre_almacen'],
-        'stock_unidades_kg' => (float)$row['stock_unidades_kg'],
-        'stock_caja_paca_bobinas' => (float)$row['stock_caja_paca_bobinas'],
-        'costo_unitario' => (float)$row['costo_unitario'],
-        'costo_total' => (float)$row['costo_total']
-    ];
+
+while ($r = mysqli_fetch_assoc($result)) {
+    $data[] = $r;
 }
 
-// --- Devolver respuesta JSON ---
-echo json_encode(['data' => $data], JSON_UNESCAPED_UNICODE);
+echo json_encode(["data" => $data]);
 ?>

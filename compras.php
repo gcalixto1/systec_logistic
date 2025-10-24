@@ -82,7 +82,7 @@
                         <th>Descripción</th>
                         <th>Cant. OC</th>
                         <th>Cant. Pendiente</th>
-                        <th>Cant. a Ingresar</th>
+                        <th>Caja/Paca/Bob_________________Unds/Kg</th>
                         <th>Almacén</th>
                         <th>Lote</th>
                         <th>Costo Unitario</th>
@@ -169,18 +169,17 @@
                                 <!-- Cantidad a Ingresar -->
                                 <td>
                                     <div class="input-group input-group">
-                                        <input type="number" class="form-control cant-unidades" 
+                                        <input type="number" class="form-control cant-cajas" 
+                                            min="0" step="0.01" value="0"
+                                            placeholder="Cajas">
+                                            <input type="number" class="form-control cant-unidades" 
                                             min="0" max="${pendiente}" value="0" 
                                             placeholder="Unidades"
                                             data-id="${d.id_detalle}" 
                                             data-idprod="${d.producto}"
                                             data-precio="${d.precio}"
                                             data-upcaja="${unidadesPorCaja}">
-                                        <span class="input-group-text">u</span>
-                                        <input type="number" class="form-control cant-cajas" 
-                                            min="0" step="0.01" value="0"
-                                            placeholder="Cajas">
-                                        <span class="input-group-text">cjs</span>
+                                       
                                     </div>
                                 </td>
 

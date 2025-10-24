@@ -1,5 +1,40 @@
 <?php include("conexionfin.php"); ?>
+<style>
+    .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
+    .spinner {
+        border: 6px solid #ccc;
+        border-top: 6px solid #007bff;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+<div id="spinner"
+    style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(255, 255, 255, 0.77);z-index:9999;text-align:center;padding-top:200px;font-size:24px;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+    </div>
+    <p>Procesando Traslado...</p>
+</div>
 <div class="container-fluid mt-4">
   <div class="card shadow">
     <div class="card-header text-white d-flex justify-content-between align-items-center">
@@ -79,7 +114,7 @@
               <small id="tras_max" class="text-muted"></small>
             </div>
             <div class="col-md-4">
-              <label class="form-label fw-bold">Cantidad (Cajas)</label>
+              <label class="form-label fw-bold">Cantidad (Cajas/Paca/Bobina)</label>
               <input type="number" step="0.01" class="form-control" id="tras_cantidad_cajas" required>
             </div>
           </div>
@@ -112,6 +147,13 @@
 </div>
 
 <script>
+  function showSpinner() {
+        $('#spinner').show();
+    }
+
+    function hideSpinner() {
+        $('#spinner').hide();
+    }
   const tabla = $('#tablaInventario').DataTable({
     ajax: {
       url: 'ajax_inventario.php',
@@ -237,6 +279,7 @@
 
   // --- Enviar traslado ---
   $('#btnTransferir').on('click', function() {
+
     const data = {
       producto_id: $('#tras_id_producto').val(),
       almacen_origen: $('#tras_id_almacen_origen').val(),
@@ -256,9 +299,10 @@
       });
       return;
     }
-
+ showSpinner();
     $.post('ajax_traslado.php', data, function(resp) {
       if (resp.success) {
+        hideSpinner();
         Swal.fire({
           title: 'Éxito!',
           text: resp.message,

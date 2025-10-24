@@ -28,21 +28,27 @@ SELECT
     p.descripcion AS producto,
     m.lote,
     m.tipo_movimiento,
-    I.stock_unidades_kg,
-    I.stock_caja_paca_bobinas,
+    COALESCE(m.unidades,0) AS stock_unidades_kg,
+    COALESCE(m.cantidad,0) AS stock_caja_paca_bobinas,
     m.umb,
     m.cliente_proveedor,
     m.almacen_id,
+    a.nombre,
     m.num_documento,
-    m.costo_unitario,
-    m.costo_total,
+    i.costo_unitario,
+    COALESCE(m.cantidad * i.costo_unitario,0) AS costo_total,
     m.fecha_movimiento,
     u.nombre AS usuario
 FROM movimientos_inventario m
 INNER JOIN producto p ON m.id_producto = p.id_producto
-INNER JOIN inventario I ON I.producto_id = p.id_producto
+LEFT JOIN inventario i 
+    ON i.producto_id = m.id_producto
+   AND i.almacen_id = m.almacen_id
+   AND ( (i.lote IS NOT NULL AND i.lote = m.lote) OR (i.lote IS NULL AND m.lote IS NULL) )
 LEFT JOIN usuario u ON m.usuario_id = u.idusuario
+INNER JOIN almacenes a ON m.almacen_id = a.id
 $condicion
+  
 ORDER BY m.fecha_movimiento DESC
 ";
 
@@ -84,6 +90,7 @@ if (!$result) {
             <th>Costo Unitario</th>
             <th>Costo Total</th>
             <th>Fecha</th>
+            <th>Almacen</th>
             <th>Usuario</th>
         </tr>
     </thead>
@@ -103,9 +110,10 @@ if (!$result) {
                     <td class='{$clase}'>{$row['tipo_movimiento']}</td>
                     <td>{$row['stock_unidades_kg']}</td>
                     <td>{$row['stock_caja_paca_bobinas']}</td>
-                    <td>{$row['costo_unitario']}</td>
+                    <td>{$row['costo_unitario']}</td>   
                     <td>{$row['costo_total']}</td>
                     <td>{$row['fecha_movimiento']}</td>
+                    <td>{$row['nombre']}</td>
                     <td>{$row['usuario']}</td>
                 </tr>";
             }
