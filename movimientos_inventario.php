@@ -85,8 +85,8 @@ if (!$result) {
             <th>Descripción</th>
             <th>Lote</th>
             <th>Tipo Movimiento</th>
-            <th>Stock Unidades</th>
-            <th>Stock Caja/Paca/KG</th>
+            <th>Stock Und/Kg</th>
+            <th>Stock Caja/Paca/Bob</th>
             <th>Costo Unitario</th>
             <th>Costo Total</th>
             <th>Fecha</th>

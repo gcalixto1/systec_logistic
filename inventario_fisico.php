@@ -34,9 +34,14 @@ SELECT
     i.lote,
     i.stock_unidades_kg,
     i.stock_caja_paca_bobinas,
-    p.und_embalaje_minima
+     CASE 
+        WHEN p.relacion = 'KG' THEN p.peso_kg_paca_caja
+        ELSE p.und_embalaje_minima
+    END AS und_embalaje_minima,
+    a.nombre
 FROM inventario i
 INNER JOIN producto p ON i.producto_id = p.id_producto
+INNER JOIN almacenes a ON i.almacen_id = a.id
 WHERE i.stock_unidades_kg > 0 OR i.stock_caja_paca_bobinas > 0
 ORDER BY p.cod_producto, i.lote
 ";
@@ -44,64 +49,104 @@ $result = $conexion->query($sql);
 ?>
 
 <style>
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #333; color: #fff; }
-    input[type="number"] { width: 80px; text-align: right; }
-    .btn { padding: 8px 16px; margin-top: 10px; cursor: pointer; border: none; border-radius: 5px; }
-    .btn-actualizar { background-color: #28a745; color: #fff; }
-    .btn-imprimir { background-color: #007bff; color: #fff; margin-left: 10px; }
-    h2 { text-align: center; color: #333; }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    th,
+    td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: center;
+    }
+
+    th {
+        background-color: #333;
+        color: #fff;
+    }
+
+    input[type="number"] {
+        width: 80px;
+        text-align: right;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        margin-top: 10px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+    }
+
+    .btn-actualizar {
+        background-color: #28a745;
+        color: #fff;
+    }
+
+    .btn-imprimir {
+        background-color: #007bff;
+        color: #fff;
+        margin-left: 10px;
+    }
+
+    h2 {
+        text-align: center;
+        color: #333;
+    }
 </style>
 
 <script>
-function syncCantidad(index) {
-    const undEmbalaje = parseFloat(document.getElementById('und_embalaje_' + index).value) || 1;
-    const unidadesInput = document.getElementById('nueva_unidades_' + index);
-    const cajasInput = document.getElementById('nueva_cajas_' + index);
+    function syncCantidad(index) {
+        const undEmbalaje = parseFloat(document.getElementById('und_embalaje_' + index).value) || 1;
+        const unidadesInput = document.getElementById('nueva_unidades_' + index);
+        const cajasInput = document.getElementById('nueva_cajas_' + index);
 
-    unidadesInput.addEventListener('input', () => {
-        const unidades = parseFloat(unidadesInput.value) || 0;
-        cajasInput.value = unidades > 0 ? (unidades / undEmbalaje).toFixed(2) : '';
-    });
+        unidadesInput.addEventListener('input', () => {
+            const unidades = parseFloat(unidadesInput.value) || 0;
+            cajasInput.value = unidades > 0 ? (unidades / undEmbalaje).toFixed(2) : '';
+        });
 
-    cajasInput.addEventListener('input', () => {
-        const cajas = parseFloat(cajasInput.value) || 0;
-        unidadesInput.value = cajas > 0 ? (cajas * undEmbalaje).toFixed(2) : '';
-    });
-}
+        cajasInput.addEventListener('input', () => {
+            const cajas = parseFloat(cajasInput.value) || 0;
+            unidadesInput.value = cajas > 0 ? (cajas * undEmbalaje).toFixed(2) : '';
+        });
+    }
 
-function imprimirInventario() {
-    window.open('imprimir_inventario.php', '_blank');
-}
+    function imprimirInventario() {
+        window.open('imprimir_inventario.php', '_blank');
+    }
 </script>
 </head>
 
 <body>
-<h2>📦 Inventario Físico por Lote</h2>
+    <h2>📦 Inventario Físico por Lote</h2>
 
-<form method="POST" action="">
-    <table>
-        <thead>
-            <tr>
-                <th>STR ID</th>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>Lote</th>
-                <th>Stock (Unidades/Kg)</th>
-                <th>Stock (Cajas/Pacas)</th>
-                <th>Cant. Física (Unidades)</th>
-                <th>Cant. Física (Cajas)</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php
-        if ($result->num_rows > 0) {
-            $index = 0;
-            while($row = $result->fetch_assoc()) {
-                echo "<tr>
+    <form method="POST" action="">
+        <table>
+            <thead>
+                <tr>
+                    <th>STR ID</th>
+                    <th>Código</th>
+                    <th>Almacen</th>
+                    <th>Descripción</th>
+                    <th>Lote</th>
+                    <th>Stock Und/Kg</th>
+                    <th>Stock Caja/Paca/Bob</th>
+                    <th>Cant. Física (Und/Kg)</th>
+                    <th>Cant. Física (Caja/Paca/Bob)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if ($result->num_rows > 0) {
+                    $index = 0;
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<tr>
                     <td>{$row['str_id']}</td>
                     <td>{$row['cod_producto']}</td>
+                    <td>{$row['nombre']}</td>
                     <td>{$row['descripcion']}</td>
                     <td>{$row['lote']}</td>
                     <td>{$row['stock_unidades_kg']}</td>
@@ -112,26 +157,26 @@ function imprimirInventario() {
                     <input type='hidden' id='und_embalaje_{$index}' value='{$row['und_embalaje_minima']}'>
                     <script>syncCantidad({$index});</script>
                 </tr>";
-                $index++;
-            }
-        } else {
-            echo "<tr><td colspan='8'>No hay inventario registrado</td></tr>";
-        }
-        ?>
-        </tbody>
-    </table>
+                        $index++;
+                    }
+                } else {
+                    echo "<tr><td colspan='8'>No hay inventario registrado</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
 
-    <button type="submit" class="btn btn-actualizar">💾 Actualizar Inventario</button>
-    <button type="button" class="btn btn-imprimir" onclick="imprimirInventario()">🖨️ Imprimir Inventario</button>
-</form>
+        <button type="submit" class="btn btn-actualizar">💾 Actualizar Inventario</button>
+        <button type="button" class="btn btn-imprimir" onclick="imprimirInventario()">🖨️ Imprimir Inventario</button>
+    </form>
 
-<?php if ($actualizado): ?>
-<script>
-Swal.fire({
-    icon: 'success',
-    title: 'Inventario actualizado',
-    text: 'Los cambios se guardaron correctamente.',
-    confirmButtonColor: '#28a745'
-});
-</script>
-<?php endif; ?>
+    <?php if ($actualizado): ?>
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Inventario actualizado',
+                text: 'Los cambios se guardaron correctamente.',
+                confirmButtonColor: '#28a745'
+            });
+        </script>
+    <?php endif; ?>
