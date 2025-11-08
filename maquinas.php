@@ -76,7 +76,7 @@
         uni_modal("Gestion de Maquina", "manage_maquina.php")
     })
     $('#borrower-list').on('click', '.edit_borrower', function () {
-        uni_modal("Modificar UMB", "manage_umb.php?id=" + $(this).attr('data-id'))
+        uni_modal("Modificar UMB", "manage_maquina.php?id=" + $(this).attr('data-id'))
     })
     $('#borrower-list').on('click', '.delete_borrower', function () {
         _conf("Esta seguro que quiere eliminar esta umb?", "delete_borrower", [$(this).attr('data-id')])

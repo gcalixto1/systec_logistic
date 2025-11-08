@@ -76,8 +76,8 @@ $almacenes = $conexion->query("SELECT id, nombre FROM almacenes ORDER BY nombre 
             <th>ID Producto</th>
             <th>ID Interno</th>
             <th>Descripción</th>
-            <th>Cajas</th>
-            <th>Cantidad</th>
+            <th>Cajas/Paca/Bob</th>
+            <th>Unds/kg</th>
             <th>Unidades</th>
             <th>UMB</th>
             <th>Almacén</th>

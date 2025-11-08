@@ -65,8 +65,8 @@
             <th>relacion</th>
             <th>Calibre</th>
             <th>Und Embalaje</th>
-            <th>Stock unidades</th>
-            <th>Stock Caja/Paca/KG</th>
+            <th>Stock Und/Kg</th>
+            <th>Stock Caja/Paca/Bob</th>
             <th>Lote</th>
             <th>Costo Uni</th>
             <th>costo Total</th>

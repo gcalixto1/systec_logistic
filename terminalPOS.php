@@ -184,7 +184,7 @@ $('#producto').select2({
     placeholder: "Buscar producto por código o descripción...",
     allowClear: true,
     ajax: {
-        url: 'buscar_productoC.php',
+        url: 'buscar_productoPedido.php',
         dataType: 'json',
         delay: 250,
         data: params => ({ q: params.term }),

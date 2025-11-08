@@ -884,17 +884,20 @@ class Action
 		}
 	}
 
-	public function listarproductoauto($filtro)
+	public function listarproductoautopedido($filtro)
 	{
 		// Consulta con los campos correctos de la tabla producto
-		$consulta = "SELECT *,CASE 
-        WHEN relacion = 'KG' THEN peso_kg_paca_caja
-        ELSE und_embalaje_minima
+		$consulta = "SELECT p.*,CASE 
+        WHEN p.relacion = 'KG' THEN p.peso_kg_paca_caja
+        ELSE p.und_embalaje_minima
     END AS und_embalaje_minima 
-                 FROM producto 
-                 WHERE descripcion LIKE ?  
-                    OR cod_producto LIKE ?  
-                    OR str_id LIKE ?";
+                 FROM producto p
+				 INNER JOIN inventario i ON p.id_producto = i.producto_id
+                 WHERE p.descripcion LIKE ?  
+                    OR p.cod_producto LIKE ?  
+                    OR p.str_id LIKE ?
+					GROUP BY p.id_producto";
+					
 
 		// Preparar la consulta
 		$stmt = $this->dbh->prepare($consulta);
@@ -919,7 +922,42 @@ class Action
 		// Retornar array de productos
 		return $productos;
 	}
+public function listarproductoauto
+($filtro)
+	{
+		// Consulta con los campos correctos de la tabla producto
+		$consulta = "SELECT *,CASE 
+        WHEN p.relacion = 'KG' THEN p.peso_kg_paca_caja
+        ELSE p.und_embalaje_minima
+    END AS und_embalaje_minima 
+                 FROM producto p
+                 WHERE p.descripcion LIKE ?  
+                    OR p.cod_producto LIKE ?  
+                    OR p.str_id LIKE ?";
 
+		// Preparar la consulta
+		$stmt = $this->dbh->prepare($consulta);
+		if ($stmt === false) {
+			die("Error en la preparación de la consulta: " . $this->dbh->error);
+		}
+
+		// Comodines para búsqueda parcial
+		$filtro = "%" . $filtro . "%";
+
+		// Vincular parámetros (tres veces porque hay 3 LIKE)
+		$stmt->bind_param("sss", $filtro, $filtro, $filtro);
+		$stmt->execute();
+
+		// Obtener resultados
+		$result = $stmt->get_result();
+		$productos = $result->fetch_all(MYSQLI_ASSOC);
+
+		// Cerrar statement
+		$stmt->close();
+
+		// Retornar array de productos
+		return $productos;
+	}
 	#endregion	
 	#region Cajas
 	function save_apertura()

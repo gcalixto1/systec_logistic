@@ -67,11 +67,17 @@ foreach ($productos as $p) {
       p.umb,
       p.ref_1,
       p.ref_2,
-      COALESCE(p.und_embalaje_minima,1) * ?,
+      COALESCE(
+        CASE 
+          WHEN p.relacion = 'KG' THEN p.peso_kg_paca_caja
+          ELSE p.und_embalaje_minima
+        END,
+      1) * ?,
       ?
     FROM producto p
     WHERE p.id_producto = ?
   ";
+
 
   $stmt = $conexion->prepare($sql);
   $stmt->bind_param("dsdsdddis",
